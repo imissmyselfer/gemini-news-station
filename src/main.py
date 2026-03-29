@@ -38,20 +38,24 @@ def save_db(news_list):
 
 def fetch_manual_url(url):
     """抓取手動輸入的新聞網址內容"""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status() # 如果狀態碼不是 200，會拋出異常
         soup = BeautifulSoup(response.text, 'html.parser')
         title = soup.title.string if soup.title else "無標題"
         paragraphs = soup.find_all('p')
-        content = " ".join([p.get_text() for p in paragraphs[:10]])
+        content = " ".join([p.get_text() for p in paragraphs[:15]]) # 稍微增加段落數量
         return {
             "category": "手動輸入",
             "title": title,
             "link": url,
-            "summary": content[:1000]
+            "summary": content[:1500] # 增加摘要長度以獲得更多資訊
         }
     except Exception as e:
-        print(f"抓取手動網址時發生錯誤: {e}")
+        print(f"抓取手動網址時發生錯誤 ({url}): {e}")
         return None
 
 def fetch_news(existing_links):
