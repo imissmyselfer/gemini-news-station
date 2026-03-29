@@ -1,0 +1,42 @@
+name: Daily Gemini News Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0 點執行
+  workflow_dispatch:      # 允許手動觸發
+    inputs:
+      manual_url:
+        description: '手動輸入新聞網址 (選填)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run news update
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MANUAL_URL: ${{ github.event.inputs.manual_url }}
+        run: python src/main.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/index.html
+          git commit -m "Update news on $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git push
