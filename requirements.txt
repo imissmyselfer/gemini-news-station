@@ -1,5 +1,5 @@
 feedparser
-google-generativeai
+google-genai
 requests
 beautifulsoup4
 markdown

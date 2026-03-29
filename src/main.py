@@ -1,14 +1,13 @@
 import feedparser
-import google.generativeai as genai
+from google import genai
 import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
 # 設定 Gemini API (環境變數)
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
+API_KEY = os.getenv("GOOGLE_API_KEY")
+client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 # 定義抓取的 RSS 來源
 FEEDS = {
@@ -62,40 +61,48 @@ def fetch_news():
 
 def process_news_with_gemini(news_list):
     """使用 Gemini 翻譯與摘要新聞"""
-    if not GOOGLE_API_KEY:
+    if not client:
         print("未設定 GOOGLE_API_KEY，跳過翻譯步驟。")
         return news_list
 
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    
     processed_news = []
-    for news in news_list:
+    total_news = len(news_list)
+    for i, news in enumerate(news_list):
+        print(f"[{i+1}/{total_news}] 正在處理: {news['title'][:50]}...")
         prompt = f"""
-        請將以下英文新聞翻譯成中文並寫一段簡短摘要。
-        標題：{news['title']}
-        連結：{news['link']}
-        內容摘要：{news['summary']}
-        
-        請以以下格式回傳：
-        [標題] (翻譯後的中文標題)
-        [摘要] (翻譯後的中文摘要，約 50-100 字)
+        你是一位專業的國際新聞與科技新聞編輯。請將以下英文新聞翻譯成繁體中文，並進行深度編輯。
+
+        原文標題：{news['title']}
+        原文連結：{news['link']}
+        原文內容片段：{news['summary']}
+
+        請依照以下格式回傳（請確保內容詳盡且專業）：
+        [標題] (請提供一個吸引人的、準確的繁體中文新聞標題)
+        [完整摘要] (請根據提供的資訊，撰寫一段 200-400 字的深度摘要，涵蓋新聞背景、主要事件與影響)
+        [關鍵重點] (請條列出 3 個這則新聞最值得關注的核心要點)
         """
         try:
-            response = model.generate_content(prompt)
+            # 使用 2026 年最新的穩定版模型 gemini-2.5-flash
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
             # 解析回應內容 (這裡簡化處理)
             processed_news.append({
                 "category": news['category'],
                 "original_link": news['link'],
                 "content": response.text.strip()
             })
+            print(f"   ✓ 處理完成")
         except Exception as e:
-            print(f"處理新聞時發生錯誤: {e}")
+            print(f"   ✗ 處理失敗: {e}")
             processed_news.append({
                 "category": news['category'],
                 "original_link": news['link'],
                 "content": f"[標題] {news['title']} (翻譯失敗)\n[摘要] 無法翻譯。"
             })
     return processed_news
+
 
 def generate_html(processed_news):
     """產生靜態 HTML 檔案"""
@@ -137,6 +144,8 @@ def generate_html(processed_news):
     </html>
     """
     
+    # 確保 docs 目錄存在
+    os.makedirs("docs", exist_ok=True)
     with open("docs/index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
 
