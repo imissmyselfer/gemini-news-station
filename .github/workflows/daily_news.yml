@@ -37,6 +37,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs/index.html
-          git commit -m "Update news on $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git add docs/index.html data/news.json
+          git commit -m "Update news database and index.html" || echo "No changes to commit"
           git push
