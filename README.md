@@ -1,44 +1,67 @@
-# Gemini News Station
-A personal news station powered by Gemini API.
+# 🗞️ Gemini News Station (Gemini 個人新聞台)
 
-✦ 這是一個非常有趣的計算！從開發到部署，我們在短短不到一小時內完成了一個全自動化專案。以下是這個專案的耗時與成本估算：
+![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
+![Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-orange?logo=google-gemini)
+![GitHub Actions](https://img.shields.io/badge/Automation-GitHub%20Actions-black?logo=github-actions)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-  1. 開發耗時估算 (Time Spent)
-  我們大約進行了 15-20 次對話。
-   * 環境初始化與架構設計： ~5 分鐘
-   * 核心功能開發 (Python + RSS)： ~10 分鐘
-   * GitHub Actions 自動化設定： ~10 分鐘
-   * 除錯與模型優化 (2.5-flash)： ~15 分鐘
-   * 部署與 Git 設定： ~10 分鐘
-   * 總計：大約 50 分鐘。
-       * 如果是傳統手動開發，包含查文件、寫 HTML 樣式、設定自動化流程，可能需要 3-4 小時。
+這是一個結合 **RSS 抓取**、**Gemini AI 深度編輯** 與 **GitHub Actions 自動化** 的全自動化個人新聞摘要站。它每天會自動為你整理當日重要的國際與科技新聞，並透過 GitHub Pages 免費發布。
 
-  2. 開發成本 (Development Cost)
-   * 軟體工具： $0 (GitHub, Python, Gemini CLI 均為免費工具)。
-   * 人力成本： $0 (由你親自與 AI 協作完成)。
+---
 
-  3. 專案運行成本 (Recurring Cost - 每月)
-  這是這個專案最棒的地方：它是完全免費的！
+## ✨ 核心功能
 
-   * GitHub Actions (自動化執行)： $0
-       * GitHub 提供公共儲存庫 (Public Repo) 每月 2,000 分鐘的免費額度。我們每天執行一次約花費 2 分鐘，每月僅需 60
-         分鐘。
-   * GitHub Pages (網站託管)： $0
-       * 完全免費。
-   * Gemini API (AI 翻譯與編輯)： $0
-       * 使用 Google AI Studio 的 Free Tier。
-       * 我們每天處理 6 則新聞，每則約 1,000 tokens (輸入+輸出)，一天約 6,000 tokens。
-       * 這遠低於 Gemini Flash 系列的免費額度限制（每日數萬 tokens 以上）。
+- **🤖 AI 深度編輯**：利用 Google Gemini 2.5-Flash 模型，將英文新聞翻譯為繁體中文，並撰寫 200-400 字的深度摘要與 3 大關鍵點。
+- **📅 每日自動更新**：透過 GitHub Actions，每天定時抓取 BBC (國際) 與 TechCrunch (科技) 的最新內容。
+- **🔗 手動發布功能**：支援 `workflow_dispatch`。看到喜歡的文章，只需輸入網址，AI 就會幫你編輯並發布到新聞台。
+- **🗂️ 歷史紀錄資料庫**：內建 JSON 資料庫，自動跳過已重複處理的新聞，並累積歷史文章。
+- **🌐 零成本託管**：完全運行於 GitHub 免費服務，無需租用伺服器。
 
-  ---
+---
 
-  總結：
-   * 總投入時間： 約 50 分鐘。
-   * 專案建置成本： $0
-   * 每月維護費用： $0
+## 🛠️ 技術架構
 
-  你現在擁有一個 「零成本、全自動、AI 驅動」 的個人新聞網站！這在幾年前是難以想像的，但透過 Gemini CLI
-  和現在的雲端工具，這變成了現實。
+- **核心語言**: Python 3.12
+- **AI 模型**: [Google Gemini API](https://ai.google.dev/) (google-genai)
+- **資料抓取**: Feedparser (RSS), BeautifulSoup4 (Web Scraping)
+- **自動化**: GitHub Actions (Schedule & Manual)
+- **靜態網頁**: GitHub Pages
 
-  現在，你只需享受每天早上產出的精選新聞即可！:)
+---
 
+## 🚀 快速開始 (部署指南)
+
+如果你想擁有自己的 Gemini 新聞台：
+
+1. **Fork 本專案**。
+2. **取得 Gemini API Key**：前往 [Google AI Studio](https://aistudio.google.com/) 申請免費的金鑰。
+3. **設定 GitHub Secrets**：
+   - 進入你的 Repo -> **Settings** -> **Secrets and variables** -> **Actions**。
+   - 點擊 **New repository secret**。
+   - Name: `GOOGLE_API_KEY` / Secret: (填入你的金鑰)。
+4. **開啟寫入權限**：
+   - 進入 **Settings** -> **Actions** -> **General**。
+   - 捲動到 **Workflow permissions**。
+   - 選擇 **Read and write permissions** 並點擊 **Save**。
+5. **啟用 GitHub Pages**：
+   - 進入 **Settings** -> **Pages**。
+   - 在 **Branch** 選擇 `main` 並選擇 `/docs` 資料夾，點擊 **Save**。
+
+---
+
+## 📝 如何使用
+
+### 自動模式
+系統預設每天 UTC 00:00 (台灣時間 08:00) 自動執行一次，更新首頁新聞。
+
+### 手動發布文章
+1. 進入 GitHub Repo 的 **Actions** 頁面。
+2. 點擊左側的 **Daily Gemini News Update**。
+3. 點擊 **Run workflow**。
+4. 在輸入框中貼上你想要翻譯的文章網址。
+5. 點擊 **Run workflow**，約 1 分鐘後你的新聞台就會出現新內容！
+
+---
+
+## 📄 開源授權
+本專案基於 MIT License 開源。
