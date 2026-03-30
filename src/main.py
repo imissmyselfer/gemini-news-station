@@ -43,16 +43,16 @@ def fetch_manual_url(url):
     }
     try:
         response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status() # 如果狀態碼不是 200，會拋出異常
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         title = soup.title.string if soup.title else "無標題"
         paragraphs = soup.find_all('p')
-        content = " ".join([p.get_text() for p in paragraphs[:15]]) # 稍微增加段落數量
+        content = " ".join([p.get_text() for p in paragraphs[:15]])
         return {
             "category": "手動輸入",
             "title": title,
             "link": url,
-            "summary": content[:1500] # 增加摘要長度以獲得更多資訊
+            "summary": content[:1500]
         }
     except Exception as e:
         print(f"抓取手動網址時發生錯誤 ({url}): {e}")
@@ -72,7 +72,7 @@ def fetch_news(existing_links):
     for category, url in FEEDS.items():
         print(f"正在抓取 {category} RSS...")
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]: # 增加抓取數量
+        for entry in feed.entries[:5]:
             if entry.link not in existing_links:
                 all_news.append({
                     "category": category,
@@ -121,11 +121,10 @@ def process_news_with_gemini(news_list):
     return processed_news
 
 def generate_html(all_history):
-    """產生靜態 HTML 檔案 (顯示最近 20 則)"""
+    """產生具有 Terminal 風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    # 按時間排序 (最新在前)
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
-    display_news = sorted_news[:20] # 顯示最近 20 則
+    display_news = sorted_news[:20]
 
     html_content = f"""
     <!DOCTYPE html>
@@ -133,38 +132,144 @@ def generate_html(all_history):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gemini 個人新聞台 (歷史紀錄版)</title>
+        <title>Echo Terminal | AI-Powered News</title>
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }}
-            h1 {{ color: #333; text-align: center; }}
-            .date-info {{ text-align: center; color: #666; margin-bottom: 30px; font-size: 0.9em; }}
-            .news-card {{ background: #fff; padding: 25px; margin-bottom: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }}
-            .category {{ display: inline-block; background: #00796b; color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 0.75em; margin-bottom: 12px; font-weight: bold; }}
-            .timestamp {{ float: right; color: #999; font-size: 0.8em; }}
-            .news-content {{ white-space: pre-wrap; color: #444; }}
-            a.origin-link {{ display: inline-block; margin-top: 15px; color: #007bff; text-decoration: none; font-weight: 500; }}
-            a.origin-link:hover {{ text-decoration: underline; }}
-            hr {{ border: 0; border-top: 1px solid #eee; margin: 40px 0; }}
-            footer {{ text-align: center; color: #999; font-size: 0.8em; margin-top: 50px; }}
+            :root {{
+                --bg-color: #0d1117;
+                --card-bg: #161b22;
+                --text-main: #c9d1d9;
+                --text-muted: #8b949e;
+                --accent-color: #2ea043;
+                --terminal-green: #3fb950;
+                --border-color: #30363d;
+            }}
+            body {{
+                font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
+                line-height: 1.7;
+                background-color: var(--bg-color);
+                color: var(--text-main);
+                max-width: 850px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }}
+            header {{
+                border-bottom: 2px solid var(--accent-color);
+                padding-bottom: 20px;
+                margin-bottom: 40px;
+            }}
+            h1 {{
+                font-size: 2.5rem;
+                margin: 0;
+                color: var(--terminal-green);
+                letter-spacing: -1px;
+            }}
+            .tagline {{
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-top: 5px;
+            }}
+            .status-bar {{
+                font-size: 0.8rem;
+                color: var(--accent-color);
+                margin-top: 10px;
+                background: rgba(46, 160, 67, 0.1);
+                padding: 5px 15px;
+                border-radius: 4px;
+                display: inline-block;
+            }}
+            .news-card {{
+                background: var(--card-bg);
+                padding: 30px;
+                margin-bottom: 35px;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+                transition: transform 0.2s, border-color 0.2s;
+            }}
+            .news-card:hover {{
+                border-color: var(--accent-color);
+                transform: translateY(-2px);
+            }}
+            .category-tag {{
+                background: rgba(46, 160, 67, 0.15);
+                color: var(--terminal-green);
+                padding: 2px 12px;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: bold;
+                border: 1px solid var(--accent-color);
+            }}
+            .timestamp {{
+                float: right;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+            }}
+            .news-content {{
+                margin-top: 20px;
+                white-space: pre-wrap;
+                color: var(--text-main);
+                font-size: 1.05rem;
+            }}
+            a.origin-link {{
+                display: inline-block;
+                margin-top: 20px;
+                color: var(--terminal-green);
+                text-decoration: none;
+                font-size: 0.9rem;
+                border: 1px solid var(--accent-color);
+                padding: 5px 15px;
+                border-radius: 4px;
+            }}
+            a.origin-link:hover {{
+                background: var(--accent-color);
+                color: #fff;
+            }}
+            footer {{
+                text-align: center;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                margin-top: 80px;
+                padding-top: 20px;
+                border-top: 1px solid var(--border-color);
+            }}
+            .cursor {{
+                display: inline-block;
+                width: 10px;
+                height: 1.2em;
+                background: var(--terminal-green);
+                vertical-align: middle;
+                margin-left: 5px;
+                animation: blink 1s infinite;
+            }}
+            @keyframes blink {{
+                0% {{ opacity: 1; }} 50% {{ opacity: 0; }} 100% {{ opacity: 1; }}
+            }}
         </style>
     </head>
     <body>
-        <h1>Gemini 個人新聞台</h1>
-        <p class="date-info">最後更新：{now} (目前共收錄 {len(all_history)} 則新聞)</p>
+        <header>
+            <h1>ECHO_TERMINAL<span class="cursor"></span></h1>
+            <div class="tagline">Neural News Aggregator & Intelligence Briefing</div>
+            <div class="status-bar">STATUS: ONLINE | LAST_FETCH: {now} | DATABASE: {len(all_history)} ENTRIES</div>
+        </header>
+        
+        <main>
     """
     
     for news in display_news:
         html_content += f"""
-        <div class="news-card">
-            <span class="category">{news['category']}</span>
-            <span class="timestamp">{news.get('timestamp', '')}</span>
+        <article class="news-card">
+            <span class="category-tag">{news['category']}</span>
+            <span class="timestamp">SEQ_TS: {news.get('timestamp', '')}</span>
             <div class="news-content">{news['content']}</div>
-            <p><a href="{news['original_link']}" class="origin-link" target="_blank">閱讀英文原文 →</a></p>
-        </div>
+            <a href="{news['original_link']}" class="origin-link" target="_blank">ACCESS_ORIGINAL_SOURCE ></a>
+        </article>
         """
     
     html_content += """
-        <footer>Powered by Gemini 2.5 & GitHub Actions</footer>
+        </main>
+        <footer>
+            SYSTEM_OUTPUT: Echo Terminal v2.0 // Powered by Gemini 2.5 Intelligence // 2026
+        </footer>
     </body>
     </html>
     """
