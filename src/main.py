@@ -121,7 +121,7 @@ def process_news_with_gemini(news_list):
     return processed_news
 
 def generate_html(all_history):
-    """產生具有 Terminal 風格的 Echo Terminal 網頁"""
+    """產生復古米白色紙張風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
     display_news = sorted_news[:20]
@@ -132,71 +132,75 @@ def generate_html(all_history):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Echo Terminal | AI-Powered News</title>
+        <title>Echo Terminal | Intelligence Hub</title>
         <style>
             :root {{
-                --bg-color: #0d1117;
-                --card-bg: #161b22;
-                --text-main: #c9d1d9;
-                --text-muted: #8b949e;
-                --accent-color: #2ea043;
-                --terminal-green: #3fb950;
-                --border-color: #30363d;
+                --bg-color: #fdf6e3;
+                --card-bg: #eee8d5;
+                --text-main: #657b83;
+                --text-muted: #93a1a1;
+                --accent-color: #2aa198;
+                --terminal-dark: #073642;
+                --border-color: #dcd7c5;
             }}
             body {{
                 font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
-                line-height: 1.7;
+                line-height: 1.8;
                 background-color: var(--bg-color);
                 color: var(--text-main);
                 max-width: 850px;
                 margin: 0 auto;
-                padding: 40px 20px;
+                padding: 50px 25px;
             }}
             header {{
-                border-bottom: 2px solid var(--accent-color);
-                padding-bottom: 20px;
-                margin-bottom: 40px;
+                border-bottom: 3px solid var(--accent-color);
+                padding-bottom: 25px;
+                margin-bottom: 45px;
             }}
             h1 {{
-                font-size: 2.5rem;
+                font-size: 2.8rem;
                 margin: 0;
-                color: var(--terminal-green);
-                letter-spacing: -1px;
+                color: var(--terminal-dark);
+                letter-spacing: -1.5px;
+                font-weight: 800;
             }}
             .tagline {{
                 color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-top: 5px;
+                font-size: 0.95rem;
+                margin-top: 8px;
+                font-weight: 500;
             }}
             .status-bar {{
                 font-size: 0.8rem;
                 color: var(--accent-color);
-                margin-top: 10px;
-                background: rgba(46, 160, 67, 0.1);
-                padding: 5px 15px;
+                margin-top: 15px;
+                background: rgba(42, 161, 152, 0.1);
+                padding: 6px 18px;
                 border-radius: 4px;
                 display: inline-block;
+                border: 1px solid rgba(42, 161, 152, 0.2);
             }}
             .news-card {{
                 background: var(--card-bg);
-                padding: 30px;
-                margin-bottom: 35px;
-                border-radius: 8px;
-                border: 1px solid var(--border-color);
-                transition: transform 0.2s, border-color 0.2s;
+                padding: 35px;
+                margin-bottom: 40px;
+                border-radius: 4px;
+                border-left: 5px solid var(--accent-color);
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.03);
+                transition: transform 0.2s;
             }}
             .news-card:hover {{
-                border-color: var(--accent-color);
-                transform: translateY(-2px);
+                transform: translateX(5px);
+                background: #f5f0df;
             }}
             .category-tag {{
-                background: rgba(46, 160, 67, 0.15);
-                color: var(--terminal-green);
+                background: var(--accent-color);
+                color: #fff;
                 padding: 2px 12px;
-                border-radius: 12px;
+                border-radius: 2px;
                 font-size: 0.75rem;
                 font-weight: bold;
-                border: 1px solid var(--accent-color);
+                text-transform: uppercase;
             }}
             .timestamp {{
                 float: right;
@@ -204,20 +208,20 @@ def generate_html(all_history):
                 font-size: 0.8rem;
             }}
             .news-content {{
-                margin-top: 20px;
+                margin-top: 25px;
                 white-space: pre-wrap;
-                color: var(--text-main);
-                font-size: 1.05rem;
+                color: var(--terminal-dark);
+                font-size: 1.1rem;
             }}
             a.origin-link {{
                 display: inline-block;
-                margin-top: 20px;
-                color: var(--terminal-green);
+                margin-top: 25px;
+                color: var(--accent-color);
                 text-decoration: none;
-                font-size: 0.9rem;
+                font-size: 0.95rem;
+                font-weight: bold;
                 border: 1px solid var(--accent-color);
-                padding: 5px 15px;
-                border-radius: 4px;
+                padding: 6px 20px;
             }}
             a.origin-link:hover {{
                 background: var(--accent-color);
@@ -226,18 +230,18 @@ def generate_html(all_history):
             footer {{
                 text-align: center;
                 color: var(--text-muted);
-                font-size: 0.8rem;
-                margin-top: 80px;
-                padding-top: 20px;
+                font-size: 0.85rem;
+                margin-top: 100px;
+                padding-top: 30px;
                 border-top: 1px solid var(--border-color);
             }}
             .cursor {{
                 display: inline-block;
-                width: 10px;
-                height: 1.2em;
-                background: var(--terminal-green);
+                width: 12px;
+                height: 1.1em;
+                background: var(--accent-color);
                 vertical-align: middle;
-                margin-left: 5px;
+                margin-left: 8px;
                 animation: blink 1s infinite;
             }}
             @keyframes blink {{
@@ -248,8 +252,8 @@ def generate_html(all_history):
     <body>
         <header>
             <h1>ECHO_TERMINAL<span class="cursor"></span></h1>
-            <div class="tagline">Neural News Aggregator & Intelligence Briefing</div>
-            <div class="status-bar">STATUS: ONLINE | LAST_FETCH: {now} | DATABASE: {len(all_history)} ENTRIES</div>
+            <div class="tagline">Vintage Intelligence Briefing System // AI Processing</div>
+            <div class="status-bar">SYSTEM_STATUS: NOMINAL | ARCHIVE_SIZE: {len(all_history)} | LAST_SYNC: {now}</div>
         </header>
         
         <main>
@@ -259,16 +263,16 @@ def generate_html(all_history):
         html_content += f"""
         <article class="news-card">
             <span class="category-tag">{news['category']}</span>
-            <span class="timestamp">SEQ_TS: {news.get('timestamp', '')}</span>
+            <span class="timestamp">LOG_REF: {news.get('timestamp', '')}</span>
             <div class="news-content">{news['content']}</div>
-            <a href="{news['original_link']}" class="origin-link" target="_blank">ACCESS_ORIGINAL_SOURCE ></a>
+            <a href="{news['original_link']}" class="origin-link" target="_blank">DECODE_FULL_SOURCE_CONTENT →</a>
         </article>
         """
     
     html_content += """
         </main>
         <footer>
-            SYSTEM_OUTPUT: Echo Terminal v2.0 // Powered by Gemini 2.5 Intelligence // 2026
+            ECHO TERMINAL v2.1 // OPERATING ON CLOUD NODE // 2026
         </footer>
     </body>
     </html>
