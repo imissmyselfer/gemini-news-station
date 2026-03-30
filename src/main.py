@@ -134,16 +134,16 @@ def generate_html(all_history):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Echo Terminal | Intelligence Hub</title>
         <style>
-            :root {{
-                --bg-color: #fdf6e3;
-                --card-bg: #eee8d5;
-                --text-main: #657b83;
-                --text-muted: #93a1a1;
+            :root {
+                --bg-color: #ffffff;
+                --card-bg: #f8f9fa;
+                --text-main: #495057;
+                --text-muted: #adb5bd;
                 --accent-color: #2aa198;
-                --terminal-dark: #073642;
-                --border-color: #dcd7c5;
-            }}
-            body {{
+                --terminal-dark: #212529;
+                --border-color: #e9ecef;
+            }
+            body {
                 font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
                 line-height: 1.8;
                 background-color: var(--bg-color);
@@ -151,26 +151,26 @@ def generate_html(all_history):
                 max-width: 850px;
                 margin: 0 auto;
                 padding: 50px 25px;
-            }}
-            header {{
+            }
+            header {
                 border-bottom: 3px solid var(--accent-color);
                 padding-bottom: 25px;
                 margin-bottom: 45px;
-            }}
-            h1 {{
+            }
+            h1 {
                 font-size: 2.8rem;
                 margin: 0;
                 color: var(--terminal-dark);
                 letter-spacing: -1.5px;
                 font-weight: 800;
-            }}
-            .tagline {{
+            }
+            .tagline {
                 color: var(--text-muted);
                 font-size: 0.95rem;
                 margin-top: 8px;
                 font-weight: 500;
-            }}
-            .status-bar {{
+            }
+            .status-bar {
                 font-size: 0.8rem;
                 color: var(--accent-color);
                 margin-top: 15px;
@@ -179,20 +179,20 @@ def generate_html(all_history):
                 border-radius: 4px;
                 display: inline-block;
                 border: 1px solid rgba(42, 161, 152, 0.2);
-            }}
-            .news-card {{
+            }
+            .news-card {
                 background: var(--card-bg);
                 padding: 35px;
                 margin-bottom: 40px;
                 border-radius: 4px;
                 border-left: 5px solid var(--accent-color);
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.03);
-                transition: transform 0.2s;
-            }}
-            .news-card:hover {{
+                box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+                transition: transform 0.2s, background 0.2s;
+            }
+            .news-card:hover {
                 transform: translateX(5px);
-                background: #f5f0df;
-            }}
+                background: #f1f3f5;
+            }
             .category-tag {{
                 background: var(--accent-color);
                 color: #fff;
