@@ -3,6 +3,7 @@ from google import genai
 import os
 import requests
 import json
+import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -16,8 +17,13 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 # 定義抓取的 RSS 來源
 FEEDS = {
-    "國際新聞": "http://feeds.bbci.co.uk/news/world/rss.xml",
-    "科技新聞": "https://techcrunch.com/feed/"
+    "國際新聞": ["http://feeds.bbci.co.uk/news/world/rss.xml"],
+    "科技新聞": ["https://techcrunch.com/feed/"],
+    "當地Local": [
+        "https://paloaltoonline.com/feed/",
+        "https://www.mv-voice.com/feed/",
+        "https://www.losaltosonline.com/feed/"
+    ]
 }
 
 def load_db():
@@ -69,21 +75,22 @@ def fetch_news(existing_links):
         if manual_news:
             all_news.append(manual_news)
 
-    for category, url in FEEDS.items():
-        print(f"正在抓取 {category} RSS...")
-        feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
-            if entry.link not in existing_links:
-                all_news.append({
-                    "category": category,
-                    "title": entry.title,
-                    "link": entry.link,
-                    "summary": entry.summary if hasattr(entry, 'summary') else ""
-                })
+    for category, urls in FEEDS.items():
+        for url in urls:
+            print(f"正在抓取 {category} RSS ({url})...")
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:5]:
+                if entry.link not in existing_links:
+                    all_news.append({
+                        "category": category,
+                        "title": entry.title,
+                        "link": entry.link,
+                        "summary": entry.summary if hasattr(entry, 'summary') else ""
+                    })
     return all_news
 
 def process_news_with_gemini(news_list):
-    """使用 Gemini 翻譯與摘要新聞"""
+    """使用 Gemini 翻譯與摘要新聞 (加入 Rate Limit 處理)"""
     if not client:
         print("未設定 GOOGLE_API_KEY，跳過翻譯步驟。")
         return []
@@ -103,21 +110,37 @@ def process_news_with_gemini(news_list):
         [標題] (請提供一個吸引人的、準確的繁體中文新聞標題)
         [完整摘要] (請根據提供的資訊，撰寫一段 200-400 字的深度摘要，涵蓋新聞背景、主要事件與影響)
         [關鍵重點] (請條列出 3 個這則新聞最值得關注的核心要點)
+
+        注意：請直接開始輸出內容，**絕對不要**包含任何開場白、禮貌性回應（例如「好的」、「沒問題」）或自我介紹（例如「身為一位編輯...」）。
         """
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-            processed_news.append({
-                "category": news['category'],
-                "original_link": news['link'],
-                "content": response.text.strip(),
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-            })
-            print(f"   ✓ 處理完成")
-        except Exception as e:
-            print(f"   ✗ 處理失敗: {e}")
+        
+        retry_count = 0
+        max_retries = 3
+        while retry_count < max_retries:
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    contents=prompt
+                )
+                processed_news.append({
+                    "category": news['category'],
+                    "original_link": news['link'],
+                    "content": response.text.strip(),
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                })
+                print(f"   ✓ 處理完成")
+                # 成功後稍微等待，避免連續請求太快 (15 RPM -> 每 4 秒一次)
+                time.sleep(4) 
+                break
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    retry_count += 1
+                    wait_time = 20 * retry_count
+                    print(f"   ! 觸發額度限制，等待 {wait_time} 秒後重試 ({retry_count}/{max_retries})...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"   ✗ 處理失敗: {e}")
+                    break
     return processed_news
 
 def generate_html(all_history):
