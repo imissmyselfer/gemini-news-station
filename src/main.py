@@ -24,7 +24,6 @@ FEEDS = {
 def clean_url(url):
     """移除網址中的追蹤參數以進行準確去重"""
     parsed = urlparse(url)
-    # 只保留 scheme, netloc, path，移除 params, query, fragment
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', '', ''))
 
 def load_db():
@@ -83,7 +82,6 @@ def fetch_news(existing_links, existing_titles):
         feed = feedparser.parse(url)
         for entry in feed.entries[:5]:
             cleaned_link = clean_url(entry.link)
-            # 同時檢查網址與標題前 20 個字 (避免標題極度相似的新聞)
             short_title = entry.title[:20]
             if cleaned_link not in existing_links and short_title not in existing_titles:
                 all_news.append({
@@ -128,7 +126,7 @@ def process_news_with_gemini(news_list):
                 "original_link": news['link'],
                 "content": response.text.strip(),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "original_title": news['title'] # 紀錄原始標題以便去重
+                "original_title": news['title']
             })
             print(f"   ✓ 處理完成")
         except Exception as e:
@@ -136,15 +134,13 @@ def process_news_with_gemini(news_list):
     return processed_news
 
 def generate_html(all_history):
-    """產生具有 Terminal 風格的 Echo Terminal 網頁"""
+    """產生具有清爽白色 Terminal 風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
     
-    # 網頁最後一重去重 (確保產出的 HTML 絕對沒有標題重複的新聞)
     unique_news = []
     seen_titles = set()
     for news in sorted_news:
-        # 抓取翻譯後標題中的關鍵字作為唯一識別 (取 [標題] 後的前 15 個字)
         content_title = ""
         if "[標題]" in news['content']:
             content_title = news['content'].split("[標題]")[1].strip()[:15]
@@ -161,16 +157,16 @@ def generate_html(all_history):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Echo Terminal | Intelligence Hub</title>
+        <title>Echo Terminal | Intelligence Briefing</title>
         <style>
             :root {{
-                --bg-color: #fdf6e3;
-                --card-bg: #eee8d5;
-                --text-main: #657b83;
-                --text-muted: #93a1a1;
-                --accent-color: #2aa198;
-                --terminal-dark: #073642;
-                --border-color: #dcd7c5;
+                --bg-color: #f8f9fa;
+                --card-bg: #ffffff;
+                --text-main: #24292e;
+                --text-muted: #57606a;
+                --accent-color: #057642;
+                --terminal-dark: #1b1f24;
+                --border-color: #d0d7de;
             }}
             body {{
                 font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
@@ -182,7 +178,7 @@ def generate_html(all_history):
                 padding: 50px 25px;
             }}
             header {{
-                border-bottom: 3px solid var(--accent-color);
+                border-bottom: 2px solid var(--accent-color);
                 padding-bottom: 25px;
                 margin-bottom: 45px;
             }}
@@ -195,41 +191,39 @@ def generate_html(all_history):
             }}
             .tagline {{
                 color: var(--text-muted);
-                font-size: 0.95rem;
+                font-size: 0.9rem;
                 margin-top: 8px;
-                font-weight: 500;
             }}
             .status-bar {{
                 font-size: 0.8rem;
                 color: var(--accent-color);
                 margin-top: 15px;
-                background: rgba(42, 161, 152, 0.1);
+                background: rgba(5, 118, 66, 0.05);
                 padding: 6px 18px;
-                border-radius: 4px;
+                border-radius: 6px;
                 display: inline-block;
-                border: 1px solid rgba(42, 161, 152, 0.2);
+                border: 1px solid rgba(5, 118, 66, 0.1);
             }}
             .news-card {{
                 background: var(--card-bg);
                 padding: 35px;
                 margin-bottom: 40px;
-                border-radius: 4px;
-                border-left: 5px solid var(--accent-color);
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.03);
-                transition: transform 0.2s;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+                transition: border-color 0.2s, box-shadow 0.2s;
             }}
             .news-card:hover {{
-                transform: translateX(5px);
-                background: #f5f0df;
+                border-color: var(--accent-color);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             }}
             .category-tag {{
                 background: var(--accent-color);
                 color: #fff;
                 padding: 2px 12px;
-                border-radius: 2px;
+                border-radius: 4px;
                 font-size: 0.75rem;
                 font-weight: bold;
-                text-transform: uppercase;
             }}
             .timestamp {{
                 float: right;
@@ -239,7 +233,7 @@ def generate_html(all_history):
             .news-content {{
                 margin-top: 25px;
                 white-space: pre-wrap;
-                color: var(--terminal-dark);
+                color: var(--text-main);
                 font-size: 1.1rem;
             }}
             a.origin-link {{
@@ -251,6 +245,7 @@ def generate_html(all_history):
                 font-weight: bold;
                 border: 1px solid var(--accent-color);
                 padding: 6px 20px;
+                border-radius: 4px;
             }}
             a.origin-link:hover {{
                 background: var(--accent-color);
@@ -281,8 +276,8 @@ def generate_html(all_history):
     <body>
         <header>
             <h1>ECHO_TERMINAL<span class="cursor"></span></h1>
-            <div class="tagline">Vintage Intelligence Briefing System // AI Processing</div>
-            <div class="status-bar">SYSTEM_STATUS: NOMINAL | ARCHIVE_SIZE: {len(display_news)}/{len(all_history)} | LAST_SYNC: {now}</div>
+            <div class="tagline">Neural Information System // Clean Briefing Interface</div>
+            <div class="status-bar">STATUS: OPTIMAL | DATABASE_SIZE: {len(all_history)} | SYNC_TIME: {now}</div>
         </header>
         
         <main>
@@ -301,7 +296,7 @@ def generate_html(all_history):
     html_content += """
         </main>
         <footer>
-            ECHO TERMINAL v2.2 // OPERATING ON CLOUD NODE // 2026
+            ECHO TERMINAL v2.3 // CLEAN WHITE INTERFACE // 2026
         </footer>
     </body>
     </html>
@@ -314,8 +309,6 @@ def generate_html(all_history):
 if __name__ == "__main__":
     print("載入資料庫...")
     db = load_db()
-    
-    # 建立現有的網址與標題集合以便去重
     existing_links = {clean_url(news['original_link']) for news in db}
     existing_titles = {news.get('original_title', '')[:20] for news in db}
     
