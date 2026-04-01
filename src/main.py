@@ -160,13 +160,14 @@ def generate_html(all_history):
         <title>Echo Terminal | Intelligence Briefing</title>
         <style>
             :root {{
-                --bg-color: #f8f9fa;
-                --card-bg: #ffffff;
-                --text-main: #24292e;
-                --text-muted: #57606a;
-                --accent-color: #057642;
-                --terminal-dark: #1b1f24;
-                --border-color: #d0d7de;
+                --bg-color: #ffffff;
+                --card-bg: #f8f9fa;
+                --text-main: #495057;
+                --text-muted: #adb5bd;
+                --accent-color: #2aa198;
+                --terminal-dark: #212529;
+                --border-color: #e9ecef;
+
             }}
             body {{
                 font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
@@ -210,12 +211,12 @@ def generate_html(all_history):
                 margin-bottom: 40px;
                 border-radius: 8px;
                 border: 1px solid var(--border-color);
-                box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-                transition: border-color 0.2s, box-shadow 0.2s;
+                box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+                transition: transform 0.2s, background 0.2s;
             }}
             .news-card:hover {{
-                border-color: var(--accent-color);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                transform: translateX(5px);
+                background: #f1f3f5;
             }}
             .category-tag {{
                 background: var(--accent-color);
