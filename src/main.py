@@ -3,9 +3,9 @@ from google import genai
 import os
 import requests
 import json
-import time
 from bs4 import BeautifulSoup
 from datetime import datetime
+from urllib.parse import urlparse, urlunparse
 
 # 設定檔案路徑
 DB_DIR = "data"
@@ -17,14 +17,15 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 # 定義抓取的 RSS 來源
 FEEDS = {
-    "國際新聞": ["http://feeds.bbci.co.uk/news/world/rss.xml"],
-    "科技新聞": ["https://techcrunch.com/feed/"],
-    "當地Local": [
-        "https://paloaltoonline.com/feed/",
-        "https://www.mv-voice.com/feed/",
-        "https://www.losaltosonline.com/feed/"
-    ]
+    "國際新聞": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "科技新聞": "https://techcrunch.com/feed/"
 }
+
+def clean_url(url):
+    """移除網址中的追蹤參數以進行準確去重"""
+    parsed = urlparse(url)
+    # 只保留 scheme, netloc, path，移除 params, query, fragment
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', '', ''))
 
 def load_db():
     """讀取新聞資料庫"""
@@ -64,33 +65,39 @@ def fetch_manual_url(url):
         print(f"抓取手動網址時發生錯誤 ({url}): {e}")
         return None
 
-def fetch_news(existing_links):
+def fetch_news(existing_links, existing_titles):
     """抓取 RSS 中的新聞清單 (過濾已存在的新聞)"""
     all_news = []
     
     manual_url = os.getenv("MANUAL_URL")
-    if manual_url and manual_url not in existing_links:
-        print(f"偵測到手動網址: {manual_url}")
-        manual_news = fetch_manual_url(manual_url)
-        if manual_news:
-            all_news.append(manual_news)
+    if manual_url:
+        cleaned_manual = clean_url(manual_url)
+        if cleaned_manual not in existing_links:
+            print(f"偵測到手動網址: {manual_url}")
+            manual_news = fetch_manual_url(manual_url)
+            if manual_news:
+                all_news.append(manual_news)
 
-    for category, urls in FEEDS.items():
-        for url in urls:
-            print(f"正在抓取 {category} RSS ({url})...")
-            feed = feedparser.parse(url)
-            for entry in feed.entries[:5]:
-                if entry.link not in existing_links:
-                    all_news.append({
-                        "category": category,
-                        "title": entry.title,
-                        "link": entry.link,
-                        "summary": entry.summary if hasattr(entry, 'summary') else ""
-                    })
+    for category, url in FEEDS.items():
+        print(f"正在抓取 {category} RSS...")
+        feed = feedparser.parse(url)
+        for entry in feed.entries[:5]:
+            cleaned_link = clean_url(entry.link)
+            # 同時檢查網址與標題前 20 個字 (避免標題極度相似的新聞)
+            short_title = entry.title[:20]
+            if cleaned_link not in existing_links and short_title not in existing_titles:
+                all_news.append({
+                    "category": category,
+                    "title": entry.title,
+                    "link": entry.link,
+                    "summary": entry.summary if hasattr(entry, 'summary') else ""
+                })
+            else:
+                print(f"   跳過重複新聞: {entry.title[:30]}...")
     return all_news
 
 def process_news_with_gemini(news_list):
-    """使用 Gemini 翻譯與摘要新聞 (加入 Rate Limit 處理)"""
+    """使用 Gemini 翻譯與摘要新聞"""
     if not client:
         print("未設定 GOOGLE_API_KEY，跳過翻譯步驟。")
         return []
@@ -110,44 +117,43 @@ def process_news_with_gemini(news_list):
         [標題] (請提供一個吸引人的、準確的繁體中文新聞標題)
         [完整摘要] (請根據提供的資訊，撰寫一段 200-400 字的深度摘要，涵蓋新聞背景、主要事件與影響)
         [關鍵重點] (請條列出 3 個這則新聞最值得關注的核心要點)
-
-        注意：請直接開始輸出內容，**絕對不要**包含任何開場白、禮貌性回應（例如「好的」、「沒問題」）或自我介紹（例如「身為一位編輯...」）。
         """
-        
-        retry_count = 0
-        max_retries = 3
-        while retry_count < max_retries:
-            try:
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash-lite",
-                    contents=prompt
-                )
-                processed_news.append({
-                    "category": news['category'],
-                    "original_link": news['link'],
-                    "content": response.text.strip(),
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-                })
-                print(f"   ✓ 處理完成")
-                # 成功後稍微等待，避免連續請求太快 (15 RPM -> 每 4 秒一次)
-                time.sleep(4) 
-                break
-            except Exception as e:
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    retry_count += 1
-                    wait_time = 20 * retry_count
-                    print(f"   ! 觸發額度限制，等待 {wait_time} 秒後重試 ({retry_count}/{max_retries})...")
-                    time.sleep(wait_time)
-                else:
-                    print(f"   ✗ 處理失敗: {e}")
-                    break
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            processed_news.append({
+                "category": news['category'],
+                "original_link": news['link'],
+                "content": response.text.strip(),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "original_title": news['title'] # 紀錄原始標題以便去重
+            })
+            print(f"   ✓ 處理完成")
+        except Exception as e:
+            print(f"   ✗ 處理失敗: {e}")
     return processed_news
 
 def generate_html(all_history):
-    """產生復古米白色紙張風格的 Echo Terminal 網頁"""
+    """產生具有 Terminal 風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
-    display_news = sorted_news[:20]
+    
+    # 網頁最後一重去重 (確保產出的 HTML 絕對沒有標題重複的新聞)
+    unique_news = []
+    seen_titles = set()
+    for news in sorted_news:
+        # 抓取翻譯後標題中的關鍵字作為唯一識別 (取 [標題] 後的前 15 個字)
+        content_title = ""
+        if "[標題]" in news['content']:
+            content_title = news['content'].split("[標題]")[1].strip()[:15]
+        
+        if content_title not in seen_titles:
+            unique_news.append(news)
+            seen_titles.add(content_title)
+            
+    display_news = unique_news[:20]
 
     html_content = f"""
     <!DOCTYPE html>
@@ -158,13 +164,13 @@ def generate_html(all_history):
         <title>Echo Terminal | Intelligence Hub</title>
         <style>
             :root {{
-                --bg-color: #ffffff;
-                --card-bg: #f8f9fa;
-                --text-main: #495057;
-                --text-muted: #adb5bd;
+                --bg-color: #fdf6e3;
+                --card-bg: #eee8d5;
+                --text-main: #657b83;
+                --text-muted: #93a1a1;
                 --accent-color: #2aa198;
-                --terminal-dark: #212529;
-                --border-color: #e9ecef;
+                --terminal-dark: #073642;
+                --border-color: #dcd7c5;
             }}
             body {{
                 font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
@@ -209,12 +215,12 @@ def generate_html(all_history):
                 margin-bottom: 40px;
                 border-radius: 4px;
                 border-left: 5px solid var(--accent-color);
-                box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-                transition: transform 0.2s, background 0.2s;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.03);
+                transition: transform 0.2s;
             }}
             .news-card:hover {{
                 transform: translateX(5px);
-                background: #f1f3f5;
+                background: #f5f0df;
             }}
             .category-tag {{
                 background: var(--accent-color);
@@ -276,7 +282,7 @@ def generate_html(all_history):
         <header>
             <h1>ECHO_TERMINAL<span class="cursor"></span></h1>
             <div class="tagline">Vintage Intelligence Briefing System // AI Processing</div>
-            <div class="status-bar">SYSTEM_STATUS: NOMINAL | ARCHIVE_SIZE: {len(all_history)} | LAST_SYNC: {now}</div>
+            <div class="status-bar">SYSTEM_STATUS: NOMINAL | ARCHIVE_SIZE: {len(display_news)}/{len(all_history)} | LAST_SYNC: {now}</div>
         </header>
         
         <main>
@@ -295,7 +301,7 @@ def generate_html(all_history):
     html_content += """
         </main>
         <footer>
-            ECHO TERMINAL v2.1 // OPERATING ON CLOUD NODE // 2026
+            ECHO TERMINAL v2.2 // OPERATING ON CLOUD NODE // 2026
         </footer>
     </body>
     </html>
@@ -308,10 +314,13 @@ def generate_html(all_history):
 if __name__ == "__main__":
     print("載入資料庫...")
     db = load_db()
-    existing_links = {news['original_link'] for news in db}
+    
+    # 建立現有的網址與標題集合以便去重
+    existing_links = {clean_url(news['original_link']) for news in db}
+    existing_titles = {news.get('original_title', '')[:20] for news in db}
     
     print("開始抓取新聞...")
-    new_raw_news = fetch_news(existing_links)
+    new_raw_news = fetch_news(existing_links, existing_titles)
     
     if not new_raw_news:
         print("沒有新的新聞需要處理。")
