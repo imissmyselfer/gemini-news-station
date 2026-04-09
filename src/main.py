@@ -21,7 +21,10 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 # 定義抓取的 RSS 來源
 FEEDS = {
     "國際新聞": "http://feeds.bbci.co.uk/news/world/rss.xml",
-    "科技新聞": "https://techcrunch.com/feed/"
+    "科技新聞": "https://techcrunch.com/feed/",
+    "Los Altos 當地新聞": "https://losaltosonline.com/rss.php",
+    "Mountain View 當地新聞": "https://mv-voice.com/rss.php",
+    "Palo Alto 當地新聞": "https://www.paloaltoonline.com/rss.php"
 }
 
 def clean_url(url):
