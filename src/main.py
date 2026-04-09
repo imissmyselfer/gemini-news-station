@@ -277,7 +277,7 @@ def process_news_with_gemini(news_list):
         """
         try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 contents=prompt
             )
             processed_news.append({
@@ -487,15 +487,32 @@ def send_daily_email(processed_news_list):
             content = news.get('content', '')
 
             # 從 Gemini 回傳的格式解析標題和重點
+            # 格式 1: [標題] xxx\n...
+            # 格式 2: 標題內容\n[深度摘要] 或 [完整摘要]...
+            # 格式 3: [標題內容]\n[摘要]...
             title = ""
             if "[標題]" in content:
                 title = content.split("[標題]")[1].split("\n")[0].strip()
+            else:
+                # 嘗試取第一行作為標題
+                first_line = content.split("\n")[0].strip()
+                if first_line:
+                    # 去除方括號、**、等格式符號
+                    title = first_line.replace("[", "").replace("]", "").replace("**", "").strip()
 
             key_points = ""
             if "[關鍵重點]" in content:
                 key_points_section = content.split("[關鍵重點]")[1].strip()
                 # 只取前 300 字
                 key_points = key_points_section[:300]
+            elif "[深度摘要]" in content or "[完整摘要]" in content:
+                # 如果沒有關鍵重點，嘗試從摘要提取
+                if "[深度摘要]" in content:
+                    summary = content.split("[深度摘要]")[1].strip()
+                else:
+                    summary = content.split("[完整摘要]")[1].strip()
+                # 取前 300 字作為關鍵重點
+                key_points = summary[:300]
 
             if title:
                 email_articles.append({
