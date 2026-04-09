@@ -22,9 +22,8 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 FEEDS = {
     "國際新聞": "http://feeds.bbci.co.uk/news/world/rss.xml",
     "科技新聞": "https://techcrunch.com/feed/",
-    "Los Altos 當地新聞": "https://losaltosonline.com/rss.php",
-    "Mountain View 當地新聞": "https://mv-voice.com/rss.php",
-    "Palo Alto 當地新聞": "https://www.paloaltoonline.com/rss.php"
+    "Mountain View 當地新聞": "https://www.mv-voice.com/feed/",
+    "Palo Alto 當地新聞": "https://www.paloaltoonline.com/feed/"
 }
 
 def clean_url(url):
@@ -193,6 +192,47 @@ def fetch_rundown():
         print(f"抓取 The Rundown AI 時發生錯誤: {e}")
     return all_articles
 
+def fetch_los_altos():
+    """抓取 Los Altos Online 的最新內容"""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    all_articles = []
+    try:
+        response = requests.get("https://www.losaltosonline.com/news/", headers=headers, timeout=15)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        articles = soup.find_all('article', limit=5)
+        for article in articles:
+            try:
+                title_elem = article.find(class_='tnt-headline')
+                link_elem = article.find('a')
+
+                if not title_elem or not link_elem:
+                    continue
+
+                title = title_elem.get_text(strip=True)
+                link = link_elem.get('href', '')
+
+                if not link.startswith('http'):
+                    link = 'https://www.losaltosonline.com' + link if link.startswith('/') else ''
+
+                if link and title:
+                    content = article.get_text(separator=' ', strip=True)[:1500]
+                    all_articles.append({
+                        "category": "Los Altos 當地新聞",
+                        "title": title,
+                        "link": link,
+                        "summary": content
+                    })
+            except Exception as e:
+                print(f"   Los Altos 單篇解析失敗: {e}")
+                continue
+    except Exception as e:
+        print(f"抓取 Los Altos 時發生錯誤: {e}")
+    return all_articles
+
 def fetch_news(existing_links, existing_titles):
     """抓取 RSS 中的新聞清單 (過濾已存在的新聞)"""
     all_news = []
@@ -246,6 +286,16 @@ def fetch_news(existing_links, existing_titles):
     print("正在抓取 The Rundown AI...")
     rundown_news = fetch_rundown()
     for news in rundown_news:
+        cleaned_link = clean_url(news['link'])
+        short_title = news['title'][:20]
+        if cleaned_link not in existing_links and short_title not in existing_titles:
+            all_news.append(news)
+        else:
+            print(f"   跳過重複新聞: {news['title'][:30]}...")
+
+    print("正在抓取 Los Altos 當地新聞...")
+    los_altos_news = fetch_los_altos()
+    for news in los_altos_news:
         cleaned_link = clean_url(news['link'])
         short_title = news['title'][:20]
         if cleaned_link not in existing_links and short_title not in existing_titles:
