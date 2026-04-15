@@ -1,0 +1,110 @@
+
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>【挑戰 1 分鐘】003：讓 Gemini 穿梭 Slack 與 Discord，執行你的自動化密令！ | Echo Terminal</title>
+            <style>
+                :root {
+                    --bg-color: #ffffff;
+                    --card-bg: #f8f9fa;
+                    --text-main: #495057;
+                    --text-muted: #adb5bd;
+                    --accent-color: #2aa198;
+                    --terminal-dark: #212529;
+                    --border-color: #e9ecef;
+                }
+                body {
+                    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
+                    line-height: 1.8;
+                    background-color: var(--bg-color);
+                    color: var(--text-main);
+                    max-width: 850px;
+                    margin: 0 auto;
+                    padding: 50px 25px;
+                }
+                header {
+                    border-bottom: 2px solid var(--accent-color);
+                    padding-bottom: 25px;
+                    margin-bottom: 45px;
+                }
+                .back-home {
+                    margin-bottom: 20px;
+                    display: block;
+                    color: var(--accent-color);
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+                h1 {
+                    font-size: 2.2rem;
+                    margin: 0;
+                    color: var(--terminal-dark);
+                    letter-spacing: -1px;
+                    font-weight: 800;
+                }
+                .article-meta {
+                    color: var(--text-muted);
+                    font-size: 0.9rem;
+                    margin-top: 10px;
+                }
+                .content {
+                    margin-top: 40px;
+                    color: var(--text-main);
+                    font-size: 1.1rem;
+                }
+                .content h2 { color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+                .content pre { background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }
+                .content code { font-family: 'Fira Code', monospace; color: #d63384; }
+                footer {
+                    text-align: center;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    margin-top: 100px;
+                    padding-top: 30px;
+                    border-top: 1px solid var(--border-color);
+                }
+            </style>
+        </head>
+        <body>
+            <header>
+                <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
+                <h1>【挑戰 1 分鐘】003：讓 Gemini 穿梭 Slack 與 Discord，執行你的自動化密令！</h1>
+                <div class="article-meta">PUBLISHED: 2026-04-15T00:15:00+08:00</div>
+            </header>
+            
+            <article class="content">
+                <blockquote>
+<p><strong>「一個人的力量有限，但當 Gemini 同時掌握了 Slack 與 Discord，它就是你的全職幕僚。」</strong></p>
+</blockquote>
+<p>在前兩篇我們完成了串接，今天我們要來玩真的：讓 Gemini 在不同平台間傳遞訊息，並交辦它三個實戰任務。</p>
+<hr />
+<h3>⏱️ 0-20s：啟動雙平台指揮權</h3>
+<p>確保你的 Gemini CLI 已經同時載入了兩個 MCP。在終端機輸入：
+<code>&gt; /mcp list</code>
+確認 <code>🟢 slack</code> 與 <code>🟢 discord</code> 都是 Ready 狀態。</p>
+<h3>⏱️ 21-45s：交辦三大自動化任務</h3>
+<p>現在，你可以直接對 Gemini 下達組合指令，測試它的跨平台處理能力：</p>
+<h4>任務一：跨平台情報同步</h4>
+<blockquote>
+<p>「Gemini，請讀取 Discord #dev 頻道的最新進度，並將摘要同步發送到 Slack 的 #project-updates 頻道。」</p>
+</blockquote>
+<h4>任務二：自動化週報草稿</h4>
+<blockquote>
+<p>「Gemini，蒐集今天 Slack 上關於『Bug』的討論，並在 Discord 的 #log 頻道幫我整理成一份待辦清單。」</p>
+</blockquote>
+<h4>任務三：全頻道廣播</h4>
+<blockquote>
+<p>「Gemini，我們要發布 Echo Terminal 的新文章了，請同時在 Slack #general 和 Discord #announcement 發布開張消息！」</p>
+</blockquote>
+<h3>⏱️ 46-60s：觀察與優化</h3>
+<p>觀察 Gemini 在切換工具時的思考過程。你會發現它會自動決定先調用 <code>discord_server</code> 讀取訊息，再調用 <code>slack_server</code> 發送訊息。這就是 <strong>AI Agent</strong> 的真正價值。</p>
+<hr />
+            </article>
+            
+            <footer>
+                ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
+            </footer>
+        </body>
+        </html>
+        
