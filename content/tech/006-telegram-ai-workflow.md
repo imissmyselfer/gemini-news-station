@@ -27,6 +27,7 @@ author: Erin
 首先，讓我們為 Gemini CLI 裝上「Telegram 手臂」，使它能與 Telegram 平台互動。這需要用 MCP（Model Context Protocol）集成。
 
 **前置條件：**
+
 *   ✅ Gemini CLI 已安裝
 *   ✅ 一個有效的 Telegram Bot Token（從 @BotFather 取得）
 
@@ -76,6 +77,7 @@ curl https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getMe
 ```
 
 **Claude Web 將為你生成：**
+
 - ✅ **一個完整的 Prompt 檔案**（如 `telegram-ai-bot-prompt.md`，約 130 行）
 - ✅ 專案結構和所有檔案清單
 - ✅ 每個模組的完整代碼
@@ -106,6 +108,7 @@ claude
 ```
 
 **貼上後，Claude Code 會自動：**
+
 - 🚀 建立所有 Python 模組（main.py, bot.py, ai_client.py 等）
 - ✅ 生成 pyproject.toml 和 .env.example
 - 📦 建立虛擬環境（venv）並安裝依賴
@@ -130,6 +133,7 @@ gemini --ask "用 Telegram Bot API 測試這個 Bot 是否在線。Token: $TELEG
 ```
 
 **完整工作流程驗證清單：**
+
 - ✅ Bot 正確啟動（日誌顯示「✅ Bot 已啟動」）
 - ✅ Gemini 客戶端已初始化
 - ✅ Claude 客戶端已初始化
@@ -164,6 +168,7 @@ gemini --ask "用 Telegram Bot API 測試這個 Bot 是否在線。Token: $TELEG
 **AI 不再只是回答問題的工具，而是可以一起協作完成真實工程的夥伴。**
 
 當你用自然語言描述需求時，不同的 AI 工具各司其職：
+
 - 一個幫你「想清楚」
 - 一個幫你「做出來」
 - 一個幫你「驗證對」

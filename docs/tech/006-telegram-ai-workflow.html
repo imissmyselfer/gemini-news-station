@@ -81,9 +81,11 @@
 <hr />
 <h3>⏱️ 0-15s：準備舞台：安裝 Telegram 到 Gemini CLI</h3>
 <p>首先，讓我們為 Gemini CLI 裝上「Telegram 手臂」，使它能與 Telegram 平台互動。這需要用 MCP（Model Context Protocol）集成。</p>
-<p><strong>前置條件：</strong>
-*   ✅ Gemini CLI 已安裝
-*   ✅ 一個有效的 Telegram Bot Token（從 @BotFather 取得）</p>
+<p><strong>前置條件：</strong></p>
+<ul>
+<li>✅ Gemini CLI 已安裝</li>
+<li>✅ 一個有效的 Telegram Bot Token（從 @BotFather 取得）</li>
+</ul>
 <p><strong>設定步驟：</strong></p>
 <p><strong>1️⃣ 取得 Telegram Chat ID</strong></p>
 <pre class="codehilite"><code class="language-bash"># 用 Telegram API 驗證你的 Bot Token，並取得基本資訊
@@ -122,12 +124,14 @@ curl https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getMe
 請生成一份詳細的實現 Prompt，包括專案結構、所有模組代碼、設定檔案和文檔。
 </code></pre>
 
-<p><strong>Claude Web 將為你生成：</strong>
-- ✅ <strong>一個完整的 Prompt 檔案</strong>（如 <code>telegram-ai-bot-prompt.md</code>，約 130 行）
-- ✅ 專案結構和所有檔案清單
-- ✅ 每個模組的完整代碼
-- ✅ 環境設定和依賴配置
-- ✅ 詳細的使用文檔範本</p>
+<p><strong>Claude Web 將為你生成：</strong></p>
+<ul>
+<li>✅ <strong>一個完整的 Prompt 檔案</strong>（如 <code>telegram-ai-bot-prompt.md</code>，約 130 行）</li>
+<li>✅ 專案結構和所有檔案清單</li>
+<li>✅ 每個模組的完整代碼</li>
+<li>✅ 環境設定和依賴配置</li>
+<li>✅ 詳細的使用文檔範本</li>
+</ul>
 <p><strong>下一步：</strong> 直接複製整個 Prompt 檔案，貼到 Claude Code 中執行！</p>
 <hr />
 <h3>⏱️ 41-55s：實戰執行：在 Claude Code 中一鍵生成項目</h3>
@@ -145,13 +149,15 @@ claude
 #    - 建立所有檔案
 </code></pre>
 
-<p><strong>貼上後，Claude Code 會自動：</strong>
-- 🚀 建立所有 Python 模組（main.py, bot.py, ai_client.py 等）
-- ✅ 生成 pyproject.toml 和 .env.example
-- 📦 建立虛擬環境（venv）並安裝依賴
-- 💾 初始化 Git 並自動提交
-- 🔍 驗證所有代碼無語法錯誤
-- 📝 生成完整文檔（README.md, SETUP.md, QUICKSTART.md）</p>
+<p><strong>貼上後，Claude Code 會自動：</strong></p>
+<ul>
+<li>🚀 建立所有 Python 模組（main.py, bot.py, ai_client.py 等）</li>
+<li>✅ 生成 pyproject.toml 和 .env.example</li>
+<li>📦 建立虛擬環境（venv）並安裝依賴</li>
+<li>💾 初始化 Git 並自動提交</li>
+<li>🔍 驗證所有代碼無語法錯誤</li>
+<li>📝 生成完整文檔（README.md, SETUP.md, QUICKSTART.md）</li>
+</ul>
 <p><strong>這就是 Claude Code 的超能力：</strong> 一次性處理複雜的多檔案項目。</p>
 <hr />
 <h3>⏱️ 56-60s：閉環驗證：Gemini CLI 測試 Telegram Bot</h3>
@@ -163,13 +169,15 @@ python -m src.main
 gemini --ask &quot;用 Telegram Bot API 測試這個 Bot 是否在線。Token: $TELEGRAM_BOT_TOKEN&quot;
 </code></pre>
 
-<p><strong>完整工作流程驗證清單：</strong>
-- ✅ Bot 正確啟動（日誌顯示「✅ Bot 已啟動」）
-- ✅ Gemini 客戶端已初始化
-- ✅ Claude 客戶端已初始化
-- ✅ 在 Telegram 中發送訊息，Bot 正確回覆
-- ✅ <code>/model claude</code> 指令工作正常
-- ✅ 對話歷史正確保留</p>
+<p><strong>完整工作流程驗證清單：</strong></p>
+<ul>
+<li>✅ Bot 正確啟動（日誌顯示「✅ Bot 已啟動」）</li>
+<li>✅ Gemini 客戶端已初始化</li>
+<li>✅ Claude 客戶端已初始化</li>
+<li>✅ 在 Telegram 中發送訊息，Bot 正確回覆</li>
+<li>✅ <code>/model claude</code> 指令工作正常</li>
+<li>✅ 對話歷史正確保留</li>
+</ul>
 <hr />
 <h3>🎯 三個 AI 工具的完美協作</h3>
 <table>
@@ -210,10 +218,12 @@ gemini --ask &quot;用 Telegram Bot API 測試這個 Bot 是否在線。Token: $
 <hr />
 <h3>📌 核心洞察</h3>
 <p><strong>AI 不再只是回答問題的工具，而是可以一起協作完成真實工程的夥伴。</strong></p>
-<p>當你用自然語言描述需求時，不同的 AI 工具各司其職：
-- 一個幫你「想清楚」
-- 一個幫你「做出來」
-- 一個幫你「驗證對」</p>
+<p>當你用自然語言描述需求時，不同的 AI 工具各司其職：</p>
+<ul>
+<li>一個幫你「想清楚」</li>
+<li>一個幫你「做出來」</li>
+<li>一個幫你「驗證對」</li>
+</ul>
 <p>這就是未來的開發方式。🎉</p>
 <hr />
             </article>
