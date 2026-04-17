@@ -1,80 +1,80 @@
 
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【挑戰 1 分鐘】002：解鎖 Discord 權限，讓 Gemini 成為你的社群管理員！ | Echo Terminal</title>
-    <style>
-        :root {
-            --bg-color: #ffffff;
-            --card-bg: #f8f9fa;
-            --text-main: #495057;
-            --text-muted: #adb5bd;
-            --accent-color: #2aa198;
-            --terminal-dark: #212529;
-            --border-color: #e9ecef;
-        }
-        body {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
-            line-height: 1.8;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            max-width: 850px;
-            margin: 0 auto;
-            padding: 50px 25px;
-        }
-        header {
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 25px;
-            margin-bottom: 45px;
-        }
-        .back-home {
-            margin-bottom: 20px;
-            display: block;
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: bold;
-        }
-        h1 {
-            font-size: 2.2rem;
-            margin: 0;
-            color: var(--terminal-dark);
-            letter-spacing: -1px;
-            font-weight: 800;
-        }
-        .article-meta {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-        .content {
-            margin-top: 40px;
-            color: var(--text-main);
-            font-size: 1.1rem;
-        }
-        .content h2 { color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .content pre { background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }
-        .content code { font-family: 'Fira Code', monospace; color: #d63384; }
-        footer {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 100px;
-            padding-top: 30px;
-            border-top: 1px solid var(--border-color);
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
-        <h1>【挑戰 1 分鐘】002：解鎖 Discord 權限，讓 Gemini 成為你的社群管理員！</h1>
-        <div class="article-meta">PUBLISHED: 2026-04-14T23:55:00+08:00</div>
-    </header>
-    
-    <article class="content">
-        <blockquote>
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>【挑戰 1 分鐘】002：解鎖 Discord 權限，讓 Gemini 成為你的社群管理員！ | Echo Terminal</title>
+            <style>
+                :root {
+                    --bg-color: #ffffff;
+                    --card-bg: #f8f9fa;
+                    --text-main: #495057;
+                    --text-muted: #adb5bd;
+                    --accent-color: #2aa198;
+                    --terminal-dark: #212529;
+                    --border-color: #e9ecef;
+                }
+                body {
+                    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
+                    line-height: 1.8;
+                    background-color: var(--bg-color);
+                    color: var(--text-main);
+                    max-width: 850px;
+                    margin: 0 auto;
+                    padding: 50px 25px;
+                }
+                header {
+                    border-bottom: 2px solid var(--accent-color);
+                    padding-bottom: 25px;
+                    margin-bottom: 45px;
+                }
+                .back-home {
+                    margin-bottom: 20px;
+                    display: block;
+                    color: var(--accent-color);
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+                h1 {
+                    font-size: 2.2rem;
+                    margin: 0;
+                    color: var(--terminal-dark);
+                    letter-spacing: -1px;
+                    font-weight: 800;
+                }
+                .article-meta {
+                    color: var(--text-muted);
+                    font-size: 0.9rem;
+                    margin-top: 10px;
+                }
+                .content {
+                    margin-top: 40px;
+                    color: var(--text-main);
+                    font-size: 1.1rem;
+                }
+                .content h2 { color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+                .content pre { background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }
+                .content code { font-family: 'Fira Code', monospace; color: #d63384; }
+                footer {
+                    text-align: center;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    margin-top: 100px;
+                    padding-top: 30px;
+                    border-top: 1px solid var(--border-color);
+                }
+            </style>
+        </head>
+        <body>
+            <header>
+                <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
+                <h1>【挑戰 1 分鐘】002：解鎖 Discord 權限，讓 Gemini 成為你的社群管理員！</h1>
+                <div class="article-meta">PUBLISHED: 2026-04-14T23:55:00+08:00</div>
+            </header>
+            
+            <article class="content">
+                <blockquote>
 <p><strong>「如果說 Slack 是辦公室，Discord 就是你的指揮中心。今天我們要賦予 Gemini 讀取心聲的能力。」</strong></p>
 </blockquote>
 <p>想讓 Gemini 幫你監控 Discord 頻道，甚至自動回覆訊息？最關鍵的不是代碼，而是開通「讀心術」。</p>
@@ -89,8 +89,8 @@
 </ol>
 <h3>⏱️ 21-40s：一鍵打通任督二脈</h3>
 <p>回到你的 Ubuntu 終端機，執行以下指令：</p>
-<div class="codehilite"><pre><span></span><code>gemini<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>--scope<span class="w"> </span>user<span class="w"> </span>discord<span class="w"> </span>npx<span class="w"> </span>-y<span class="w"> </span>@modelcontextprotocol/server-discord<span class="w"> </span>--env<span class="w"> </span><span class="nv">DISCORD_BOT_TOKEN</span><span class="o">=</span>你的Token
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">gemini mcp add --scope user discord npx -y @modelcontextprotocol/server-discord --env DISCORD_BOT_TOKEN=你的Token
+</code></pre>
 
 <h3>⏱️ 41-55s：驗證與邀請</h3>
 <p>在 Portal 的 "OAuth2" -&gt; "URL Generator"：</p>
@@ -100,11 +100,11 @@
 <h3>⏱️ 56-60s：奇蹟時刻</h3>
 <p>進入 Gemini CLI 輸入：</p>
 <p>「Gemini，幫我看看 Discord 剛才大家在聊什麼？並在 #general 頻道打個招呼！」</p>
-    </article>
-    
-    <footer>
-        ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
-    </footer>
-</body>
-</html>
+            </article>
+            
+            <footer>
+                ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
+            </footer>
+        </body>
+        </html>
         

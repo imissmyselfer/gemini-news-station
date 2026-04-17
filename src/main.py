@@ -626,10 +626,10 @@ def process_markdown_articles():
                 front_matter = parts[1]
                 markdown_body = parts[2]
                 
-                # 簡單的正則表達式解析
-                title_match = re.search(r'title:\s*"(.*?)"', front_matter)
+                # 簡單的正則表達式解析（支持有無引號）
+                title_match = re.search(r'title:\s*["\']?(.*?)["\']?\s*$', front_matter, re.MULTILINE)
                 if title_match:
-                    title = title_match.group(1)
+                    title = title_match.group(1).strip()
                 
                 date_match = re.search(r'date:\s*(.*)', front_matter)
                 if date_match:

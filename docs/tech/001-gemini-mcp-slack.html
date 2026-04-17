@@ -1,80 +1,80 @@
 
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【挑戰 1 分鐘】001：讓 Gemini CLI 接上 Slack，打造你的 AI 通訊官！ | Echo Terminal</title>
-    <style>
-        :root {
-            --bg-color: #ffffff;
-            --card-bg: #f8f9fa;
-            --text-main: #495057;
-            --text-muted: #adb5bd;
-            --accent-color: #2aa198;
-            --terminal-dark: #212529;
-            --border-color: #e9ecef;
-        }
-        body {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
-            line-height: 1.8;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            max-width: 850px;
-            margin: 0 auto;
-            padding: 50px 25px;
-        }
-        header {
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 25px;
-            margin-bottom: 45px;
-        }
-        .back-home {
-            margin-bottom: 20px;
-            display: block;
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: bold;
-        }
-        h1 {
-            font-size: 2.2rem;
-            margin: 0;
-            color: var(--terminal-dark);
-            letter-spacing: -1px;
-            font-weight: 800;
-        }
-        .article-meta {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-        .content {
-            margin-top: 40px;
-            color: var(--text-main);
-            font-size: 1.1rem;
-        }
-        .content h2 { color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .content pre { background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }
-        .content code { font-family: 'Fira Code', monospace; color: #d63384; }
-        footer {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 100px;
-            padding-top: 30px;
-            border-top: 1px solid var(--border-color);
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
-        <h1>【挑戰 1 分鐘】001：讓 Gemini CLI 接上 Slack，打造你的 AI 通訊官！</h1>
-        <div class="article-meta">PUBLISHED: 2026-04-14T23:30:00+08:00</div>
-    </header>
-    
-    <article class="content">
-        <blockquote>
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>【挑戰 1 分鐘】001：讓 Gemini CLI 接上 Slack，打造你的 AI 通訊官！ | Echo Terminal</title>
+            <style>
+                :root {
+                    --bg-color: #ffffff;
+                    --card-bg: #f8f9fa;
+                    --text-main: #495057;
+                    --text-muted: #adb5bd;
+                    --accent-color: #2aa198;
+                    --terminal-dark: #212529;
+                    --border-color: #e9ecef;
+                }
+                body {
+                    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
+                    line-height: 1.8;
+                    background-color: var(--bg-color);
+                    color: var(--text-main);
+                    max-width: 850px;
+                    margin: 0 auto;
+                    padding: 50px 25px;
+                }
+                header {
+                    border-bottom: 2px solid var(--accent-color);
+                    padding-bottom: 25px;
+                    margin-bottom: 45px;
+                }
+                .back-home {
+                    margin-bottom: 20px;
+                    display: block;
+                    color: var(--accent-color);
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+                h1 {
+                    font-size: 2.2rem;
+                    margin: 0;
+                    color: var(--terminal-dark);
+                    letter-spacing: -1px;
+                    font-weight: 800;
+                }
+                .article-meta {
+                    color: var(--text-muted);
+                    font-size: 0.9rem;
+                    margin-top: 10px;
+                }
+                .content {
+                    margin-top: 40px;
+                    color: var(--text-main);
+                    font-size: 1.1rem;
+                }
+                .content h2 { color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+                .content pre { background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }
+                .content code { font-family: 'Fira Code', monospace; color: #d63384; }
+                footer {
+                    text-align: center;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    margin-top: 100px;
+                    padding-top: 30px;
+                    border-top: 1px solid var(--border-color);
+                }
+            </style>
+        </head>
+        <body>
+            <header>
+                <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
+                <h1>【挑戰 1 分鐘】001：讓 Gemini CLI 接上 Slack，打造你的 AI 通訊官！</h1>
+                <div class="article-meta">PUBLISHED: 2026-04-14T23:30:00+08:00</div>
+            </header>
+            
+            <article class="content">
+                <blockquote>
 <p><strong>「從 0 到 🟢，只需 60 秒。這不只是一個新聞台，這是一個不斷進化的 AI 實驗室。」</strong></p>
 </blockquote>
 <p>想讓你的 Gemini 不只會聊天，還能幫你在 Slack 發報、讀訊息？不需要寫長長的代碼，我們用 <strong>MCP (Model Context Protocol)</strong> 瞬間打通！</p>
@@ -88,23 +88,23 @@
 </ol>
 <h3>⏱️ 16-40s：一鍵注入超能力</h3>
 <p>在你的 Ubuntu 終端機，執行以下指令（替換你的 Token）：</p>
-<div class="codehilite"><pre><span></span><code>gemini<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>--scope<span class="w"> </span>user<span class="w"> </span>slack<span class="w"> </span>npx<span class="w"> </span>-y<span class="w"> </span>@modelcontextprotocol/server-slack<span class="w"> </span>--env<span class="w"> </span><span class="nv">SLACK_BOT_TOKEN</span><span class="o">=</span>你的Token
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">gemini mcp add --scope user slack npx -y @modelcontextprotocol/server-slack --env SLACK_BOT_TOKEN=你的Token
+</code></pre>
 
 <h3>⏱️ 41-55s：驗證綠燈</h3>
 <p>進入 Gemini CLI 後輸入：</p>
-<div class="codehilite"><pre><span></span><code>&gt;<span class="w"> </span>/mcp<span class="w"> </span>list
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">&gt; /mcp list
+</code></pre>
 
 <p>看見 <code>🟢 slack - Ready</code> 了嗎？通訊權限已解鎖！</p>
 <h3>⏱️ 56-60s：奇蹟時刻</h3>
 <p>對著 Gemini 下令：</p>
 <p>「請幫我在 Slack 的 #general 頻道發送一則訊息：『Ubuntu 24.04 報告！Gemini 已成功接管通訊通道。🚀』」</p>
-    </article>
-    
-    <footer>
-        ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
-    </footer>
-</body>
-</html>
+            </article>
+            
+            <footer>
+                ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
+            </footer>
+        </body>
+        </html>
         
