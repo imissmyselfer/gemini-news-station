@@ -9,13 +9,9 @@ from urllib.parse import urlparse, urlunparse
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import markdown
-import re
-
 # 設定檔案路徑
 DB_DIR = "data"
 DB_PATH = os.path.join(DB_DIR, "news.json")
-CONTENT_DIR = "content"
 DOCS_DIR = "docs"
 
 # 設定 Gemini API (環境變數)
@@ -253,7 +249,9 @@ def fetch_news(existing_links, existing_titles):
     for category, url in FEEDS.items():
         print(f"正在抓取 {category} RSS...")
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
+        # 限制每類新聞抓取數量：當地新聞最多 5 則，其他 RSS 最多 5 則
+        limit = 5
+        for entry in feed.entries[:limit]:
             cleaned_link = clean_url(entry.link)
             short_title = entry.title[:20]
             if cleaned_link not in existing_links and short_title not in existing_titles:
@@ -269,7 +267,7 @@ def fetch_news(existing_links, existing_titles):
     # 抓取新增的電子報來源
     print("正在抓取 TLDR Newsletter...")
     tldr_news = fetch_tldr()
-    for news in tldr_news:
+    for news in tldr_news[:5]:
         cleaned_link = clean_url(news['link'])
         short_title = news['title'][:20]
         if cleaned_link not in existing_links and short_title not in existing_titles:
@@ -279,7 +277,7 @@ def fetch_news(existing_links, existing_titles):
 
     print("正在抓取 1440 Daily Digest...")
     digest_news = fetch_1440()
-    for news in digest_news:
+    for news in digest_news[:5]:
         cleaned_link = clean_url(news['link'])
         short_title = news['title'][:20]
         if cleaned_link not in existing_links and short_title not in existing_titles:
@@ -289,7 +287,7 @@ def fetch_news(existing_links, existing_titles):
 
     print("正在抓取 The Rundown AI...")
     rundown_news = fetch_rundown()
-    for news in rundown_news:
+    for news in rundown_news[:5]:
         cleaned_link = clean_url(news['link'])
         short_title = news['title'][:20]
         if cleaned_link not in existing_links and short_title not in existing_titles:
@@ -299,7 +297,7 @@ def fetch_news(existing_links, existing_titles):
 
     print("正在抓取 Los Altos 當地新聞...")
     los_altos_news = fetch_los_altos()
-    for news in los_altos_news:
+    for news in los_altos_news[:5]:
         cleaned_link = clean_url(news['link'])
         short_title = news['title'][:20]
         if cleaned_link not in existing_links and short_title not in existing_titles:
@@ -349,7 +347,7 @@ def process_news_with_gemini(news_list):
             print(f"   ✗ 處理失敗: {e}")
     return processed_news
 
-def generate_html(all_history, tech_articles=[]):
+def generate_html(all_history):
     """產生具有清爽白色 Terminal 風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
@@ -366,28 +364,6 @@ def generate_html(all_history, tech_articles=[]):
             seen_titles.add(content_title)
             
     display_news = unique_news[:20]
-
-    # 生成技術專欄 HTML
-    tech_section_html = ""
-    if tech_articles:
-        tech_section_html = """
-        <section class="tech-column">
-            <h2 class="section-title">⏱️ 挑戰 1 分鐘系列</h2>
-            <div class="tech-grid">
-        """
-        for article in tech_articles:
-            tech_section_html += f"""
-                <a href="{article['link']}" class="tech-card">
-                    <div class="tech-tag">TECH_LAB</div>
-                    <div class="tech-title">{article['title']}</div>
-                    <div class="tech-date">{article['date']}</div>
-                </a>
-            """
-        tech_section_html += """
-            </div>
-        </section>
-        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 40px 0;">
-        """
 
     html_content = f"""
     <!DOCTYPE html>
@@ -562,7 +538,6 @@ def generate_html(all_history, tech_articles=[]):
         </header>
         
         <main>
-            {tech_section_html}
     """
     
     for news in display_news:
@@ -587,164 +562,6 @@ def generate_html(all_history, tech_articles=[]):
     os.makedirs("docs", exist_ok=True)
     with open("docs/index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
-
-def process_markdown_articles():
-    """掃描 content/tech 目錄下的 .md 檔案，並轉換為個別 HTML 檔案"""
-    tech_content_dir = os.path.join(CONTENT_DIR, "tech")
-    tech_docs_dir = os.path.join(DOCS_DIR, "tech")
-    
-    if not os.path.exists(tech_content_dir):
-        print(f"找不到目錄: {tech_content_dir}，跳過 Markdown 處理。")
-        return []
-
-    os.makedirs(tech_docs_dir, exist_ok=True)
-    
-    # 找到所有的 .md 檔案
-    md_files = sorted([f for f in os.listdir(tech_content_dir) if f.endswith(".md")], reverse=True)
-    if not md_files:
-        print("在 content/tech 中找不到任何 .md 檔案。")
-        return []
-
-    processed_articles = []
-    for md_file in md_files:
-        md_file_path = os.path.join(tech_content_dir, md_file)
-        html_filename = md_file.replace(".md", ".html")
-        html_file_path = os.path.join(tech_docs_dir, html_filename)
-        
-        print(f"正在處理 Markdown 檔案: {md_file_path}...")
-
-        with open(md_file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # 解析 Front Matter (YAML 格式)
-        title = "技術教學"
-        date_str = ""
-        markdown_body = content
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                front_matter = parts[1]
-                markdown_body = parts[2]
-                
-                # 簡單的正則表達式解析（支持有無引號）
-                title_match = re.search(r'title:\s*["\']?(.*?)["\']?\s*$', front_matter, re.MULTILINE)
-                if title_match:
-                    title = title_match.group(1).strip()
-                
-                date_match = re.search(r'date:\s*(.*)', front_matter)
-                if date_match:
-                    date_str = date_match.group(1).strip()
-
-        # 移除 Markdown body 中可能與 Front Matter 重複的標題 (以 # 開頭的第一行)
-        markdown_body = markdown_body.lstrip()
-        if markdown_body.startswith("# "):
-            lines = markdown_body.split("\n", 1)
-            if len(lines) > 1:
-                markdown_body = lines[1].lstrip()
-            else:
-                markdown_body = ""
-
-        # 將 Markdown 轉換為 HTML
-        html_body = markdown.markdown(markdown_body, extensions=['extra', 'codehilite'])
-
-        # 生成完整的 HTML 頁面 (延用首頁風格)
-        full_html = f"""
-        <!DOCTYPE html>
-        <html lang="zh-TW">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{title} | Echo Terminal</title>
-            <style>
-                :root {{
-                    --bg-color: #ffffff;
-                    --card-bg: #f8f9fa;
-                    --text-main: #495057;
-                    --text-muted: #adb5bd;
-                    --accent-color: #2aa198;
-                    --terminal-dark: #212529;
-                    --border-color: #e9ecef;
-                }}
-                body {{
-                    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
-                    line-height: 1.8;
-                    background-color: var(--bg-color);
-                    color: var(--text-main);
-                    max-width: 850px;
-                    margin: 0 auto;
-                    padding: 50px 25px;
-                }}
-                header {{
-                    border-bottom: 2px solid var(--accent-color);
-                    padding-bottom: 25px;
-                    margin-bottom: 45px;
-                }}
-                .back-home {{
-                    margin-bottom: 20px;
-                    display: block;
-                    color: var(--accent-color);
-                    text-decoration: none;
-                    font-weight: bold;
-                }}
-                h1 {{
-                    font-size: 2.2rem;
-                    margin: 0;
-                    color: var(--terminal-dark);
-                    letter-spacing: -1px;
-                    font-weight: 800;
-                }}
-                .article-meta {{
-                    color: var(--text-muted);
-                    font-size: 0.9rem;
-                    margin-top: 10px;
-                }}
-                .content {{
-                    margin-top: 40px;
-                    color: var(--text-main);
-                    font-size: 1.1rem;
-                }}
-                .content h2 {{ color: var(--terminal-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }}
-                .content pre {{ background: #f1f3f5; padding: 20px; border-radius: 6px; overflow-x: auto; }}
-                .content code {{ font-family: 'Fira Code', monospace; color: #d63384; }}
-                footer {{
-                    text-align: center;
-                    color: var(--text-muted);
-                    font-size: 0.85rem;
-                    margin-top: 100px;
-                    padding-top: 30px;
-                    border-top: 1px solid var(--border-color);
-                }}
-            </style>
-        </head>
-        <body>
-            <header>
-                <a href="../index.html" class="back-home">← BACK_TO_ECHO_TERMINAL</a>
-                <h1>{title}</h1>
-                <div class="article-meta">PUBLISHED: {date_str}</div>
-            </header>
-            
-            <article class="content">
-                {html_body}
-            </article>
-            
-            <footer>
-                ECHO TERMINAL v2.3 // TECH TUTORIALS // 2026
-            </footer>
-        </body>
-        </html>
-        """
-        
-        with open(html_file_path, "w", encoding="utf-8") as f:
-            f.write(full_html)
-        
-        processed_articles.append({
-            "title": title,
-            "date": date_str.split("T")[0] if "T" in date_str else date_str,
-            "link": f"tech/{html_filename}"
-        })
-        print(f"✓ 已成功將 {md_file} 轉換為 HTML")
-    
-    return processed_articles
 
 def send_daily_email(processed_news_list):
     """發送每日新聞摘要 Email"""
@@ -892,12 +709,9 @@ if __name__ == "__main__":
         print("儲存資料庫...")
         save_db(db)
 
-    # 處理技術專欄 Markdown 檔案
-    print("開始處理技術專欄 Markdown...")
-    tech_articles = process_markdown_articles()
-
+    # 重新產生網頁檔案
     print("重新產生網頁檔案...")
-    generate_html(db, tech_articles)
+    generate_html(db)
 
     # 寄送今日新聞摘要 Email
     print("準備寄送新聞摘要 Email...")

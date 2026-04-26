@@ -18,10 +18,6 @@ fi
 echo "📰 Step 1: Fetching and editing news..."
 python3 src/main.py
 
-# 3. 執行 Morning DJ 推薦
-echo "📻 Step 2: Generating Morning DJ report and sending email..."
-python3 src/morning_dj.py
-
 echo "------------------------------------------"
 echo "✅ All tasks completed!"
 echo "------------------------------------------"

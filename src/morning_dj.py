@@ -2,7 +2,7 @@ import json
 import os
 import random
 import smtplib
-import google.generativeai as genai
+from google import genai
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 # 加載環境變數
 def load_config():
     config = {}
-    dot_env_path = "/home/erin/Working/gemini/gemini-news-station/.env"
+    dot_env_path = ".env"
     if os.path.exists(dot_env_path):
         with open(dot_env_path, 'r', encoding='utf-8') as f:
             for line in f:
@@ -70,8 +70,7 @@ def morning_dj():
         print("Error: GOOGLE_API_KEY not found in .env.")
         return
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
+    client = genai.Client(api_key=api_key)
 
     news_summary = get_latest_news(news_file)
     music_list = get_music_list(music_file)
@@ -101,7 +100,10 @@ def morning_dj():
     請直接輸出內容，不要帶有額外的 Markdown 標籤語法在最外層。
     """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-2.5-flash-lite',
+        contents=prompt
+    )
     report_content = response.text
     
     # 1. 儲存到 Obsidian
