@@ -83,13 +83,13 @@ def is_spanish(title):
     return len(marks) >= 2
 
 def load_db():
-    """讀取新聞資料庫"""
+    """讀取新聞資料庫；檔案損毀時直接中止，避免後續 save_db 覆寫掉整份歷史"""
     if os.path.exists(DB_PATH):
         try:
             with open(DB_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
-            return []
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise SystemExit(f"✗ {DB_PATH} 損毀，中止執行以保護歷史資料: {e}")
     return []
 
 def save_db(news_list):
@@ -107,7 +107,9 @@ def fetch_manual_url(url):
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        title = soup.title.string if soup.title else "無標題"
+        # get_text 而非 .string：<title> 含巢狀標籤時 .string 會回傳 None
+        title = soup.title.get_text(strip=True) if soup.title else ""
+        title = title or "無標題"
         paragraphs = soup.find_all('p')
         content = " ".join([p.get_text() for p in paragraphs[:15]])
         return {
