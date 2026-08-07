@@ -4,6 +4,7 @@ import os
 import requests
 import json
 import html
+import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urlparse, urlunparse
@@ -348,8 +349,167 @@ def process_news_with_gemini(news_list):
             print(f"   ✗ 處理失敗: {e}")
     return processed_news
 
+# Swiss 極簡版型樣式 (非 f-string，避免大括號轉義)
+PAGE_STYLE = """
+    * { box-sizing: border-box; }
+    :root {
+        --ink: #000;
+        --muted: #999;
+        --line: #000;
+        --accent: #0033cc;
+    }
+    body {
+        margin: 0;
+        background: #fff;
+        color: var(--ink);
+        font-family: 'Helvetica Neue', Inter, 'PingFang TC', 'Noto Sans TC', system-ui, sans-serif;
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 60px 24px 120px;
+        line-height: 1.75;
+    }
+    header {
+        border-bottom: 3px solid var(--line);
+        padding-bottom: 18px;
+    }
+    h1 {
+        font-size: 3.2rem;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        margin: 0;
+        line-height: 1;
+    }
+    .tagline {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+    .meta {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-top: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    article {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: 28px;
+        padding: 38px 0;
+        border-bottom: 1px solid #ddd;
+    }
+    .num {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--muted);
+        padding-top: 5px;
+    }
+    .cat {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+    }
+    .time {
+        float: right;
+        font-size: 0.7rem;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+    }
+    h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 12px 0 16px;
+        letter-spacing: -0.02em;
+    }
+    .summary {
+        font-size: 0.92rem;
+        color: #333;
+        white-space: pre-wrap;
+    }
+    .points {
+        margin: 22px 0 0;
+        padding: 16px 0 0;
+        list-style: none;
+        border-top: 1px solid #ddd;
+    }
+    .points li {
+        font-size: 0.85rem;
+        color: #555;
+        margin-bottom: 8px;
+        padding-left: 18px;
+        position: relative;
+    }
+    .points li:before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+    }
+    .src {
+        display: inline-block;
+        margin-top: 22px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--accent);
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .src:hover { text-decoration: underline; }
+    footer {
+        margin-top: 80px;
+        padding-top: 20px;
+        border-top: 3px solid var(--line);
+        font-size: 0.72rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+    @media (max-width: 600px) {
+        h1 { font-size: 2.2rem; }
+        article { grid-template-columns: 1fr; gap: 0; }
+        .num { display: none; }
+    }
+"""
+
+def parse_gemini_content(content):
+    """將 Gemini 回傳的 [標題]/[完整摘要]/[關鍵重點] 拆成結構化欄位"""
+    title, summary, points = "", "", []
+
+    match = re.search(r"\[標題\]\s*(.+)", content)
+    if match:
+        title = match.group(1).strip()
+
+    match = re.search(r"\[(?:完整摘要|深度摘要)\]\s*(.*?)(?=\n\s*\[|$)", content, re.S)
+    if match:
+        summary = match.group(1).strip()
+
+    match = re.search(r"\[關鍵重點\]\s*(.*)$", content, re.S)
+    if match:
+        for line in match.group(1).strip().split("\n"):
+            line = re.sub(r"^\d+[\.、)]\s*", "", line.strip())
+            line = re.sub(r"^[-*•]\s*", "", line)
+            if line:
+                points.append(line)
+
+    if not title:
+        title = content.split("\n")[0].strip()[:80]
+    if not summary:
+        summary = content
+    return title, summary, points[:3]
+
+def format_inline(text):
+    """先 HTML escape，再把 **粗體** 還原成 <strong> 標籤"""
+    escaped = html.escape(text)
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+
 def generate_html(all_history):
-    """產生具有清爽白色 Terminal 風格的 Echo Terminal 網頁"""
+    """產生 Swiss 極簡風格的 Echo Terminal 網頁"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sorted_news = sorted(all_history, key=lambda x: x.get('timestamp', ''), reverse=True)
     
@@ -366,199 +526,52 @@ def generate_html(all_history):
             
     display_news = unique_news[:20]
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="zh-TW">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Echo Terminal | Intelligence Briefing</title>
-        <style>
-            :root {{
-                --bg-color: #ffffff;
-                --card-bg: #f8f9fa;
-                --text-main: #495057;
-                --text-muted: #adb5bd;
-                --accent-color: #2aa198;
-                --terminal-dark: #212529;
-                --border-color: #e9ecef;
+    html_content = f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Terminal | Intelligence Briefing</title>
+    <style>{PAGE_STYLE}</style>
+</head>
+<body>
+    <header>
+        <h1>ECHO TERMINAL</h1>
+        <div class="tagline">Neural Information System — Intelligence Briefing</div>
+        <div class="meta">共 {len(all_history)} 則紀錄 · 最後同步 {now}</div>
+    </header>
+    <main>
+"""
 
-            }}
-            body {{
-                font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace, 'PingFang TC';
-                line-height: 1.8;
-                background-color: var(--bg-color);
-                color: var(--text-main);
-                max-width: 850px;
-                margin: 0 auto;
-                padding: 50px 25px;
-            }}
-            header {{
-                border-bottom: 2px solid var(--accent-color);
-                padding-bottom: 25px;
-                margin-bottom: 45px;
-            }}
-            h1 {{
-                font-size: 2.8rem;
-                margin: 0;
-                color: var(--terminal-dark);
-                letter-spacing: -1.5px;
-                font-weight: 800;
-            }}
-            .tagline {{
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-top: 8px;
-            }}
-            .status-bar {{
-                font-size: 0.8rem;
-                color: var(--accent-color);
-                margin-top: 15px;
-                background: rgba(5, 118, 66, 0.05);
-                padding: 6px 18px;
-                border-radius: 6px;
-                display: inline-block;
-                border: 1px solid rgba(5, 118, 66, 0.1);
-            }}
-            .section-title {{
-                font-size: 1.2rem;
-                color: var(--terminal-dark);
-                margin-bottom: 20px;
-                font-weight: bold;
-            }}
-            .tech-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
-            }}
-            .tech-card {{
-                background: var(--card-bg);
-                padding: 20px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                text-decoration: none;
-                color: var(--text-main);
-                transition: all 0.2s;
-            }}
-            .tech-card:hover {{
-                border-color: var(--accent-color);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            }}
-            .tech-tag {{
-                font-size: 0.7rem;
-                color: var(--accent-color);
-                font-weight: bold;
-                margin-bottom: 8px;
-            }}
-            .tech-title {{
-                font-size: 1rem;
-                font-weight: bold;
-                line-height: 1.4;
-                margin-bottom: 10px;
-            }}
-            .tech-date {{
-                font-size: 0.75rem;
-                color: var(--text-muted);
-            }}
-            .news-card {{
-                background: var(--card-bg);
-                padding: 35px;
-                margin-bottom: 40px;
-                border-radius: 8px;
-                border: 1px solid var(--border-color);
-                box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-                transition: transform 0.2s, background 0.2s;
-            }}
-            .news-card:hover {{
-                transform: translateX(5px);
-                background: #f1f3f5;
-            }}
-            .category-tag {{
-                background: var(--accent-color);
-                color: #fff;
-                padding: 2px 12px;
-                border-radius: 4px;
-                font-size: 0.75rem;
-                font-weight: bold;
-            }}
-            .timestamp {{
-                float: right;
-                color: var(--text-muted);
-                font-size: 0.8rem;
-            }}
-            .news-content {{
-                margin-top: 25px;
-                white-space: pre-wrap;
-                color: var(--text-main);
-                font-size: 1.1rem;
-            }}
-            a.origin-link {{
-                display: inline-block;
-                margin-top: 25px;
-                color: var(--accent-color);
-                text-decoration: none;
-                font-size: 0.95rem;
-                font-weight: bold;
-                border: 1px solid var(--accent-color);
-                padding: 6px 20px;
-                border-radius: 4px;
-            }}
-            a.origin-link:hover {{
-                background: var(--accent-color);
-                color: #fff;
-            }}
-            footer {{
-                text-align: center;
-                color: var(--text-muted);
-                font-size: 0.85rem;
-                margin-top: 100px;
-                padding-top: 30px;
-                border-top: 1px solid var(--border-color);
-            }}
-            .cursor {{
-                display: inline-block;
-                width: 12px;
-                height: 1.1em;
-                background: var(--accent-color);
-                vertical-align: middle;
-                margin-left: 8px;
-                animation: blink 1s infinite;
-            }}
-            @keyframes blink {{
-                0% {{ opacity: 1; }} 50% {{ opacity: 0; }} 100% {{ opacity: 1; }}
-            }}
-        </style>
-    </head>
-    <body>
-        <header>
-            <h1>ECHO_TERMINAL<span class="cursor"></span></h1>
-            <div class="tagline">Neural Information System // Clean Briefing Interface</div>
-            <div class="status-bar">STATUS: OPTIMAL | DATABASE_SIZE: {len(all_history)} | SYNC_TIME: {now}</div>
-        </header>
-        
-        <main>
-    """
-    
-    for news in display_news:
+    for i, news in enumerate(display_news, 1):
+        title, summary, points = parse_gemini_content(news['content'])
+        points_html = ""
+        if points:
+            items = "".join(f"<li>{format_inline(p)}</li>" for p in points)
+            points_html = f'<ul class="points">{items}</ul>'
+
         html_content += f"""
-        <article class="news-card">
-            <span class="category-tag">{html.escape(news['category'])}</span>
-            <span class="timestamp">LOG_REF: {html.escape(news.get('timestamp', ''))}</span>
-            <div class="news-content">{html.escape(news['content'])}</div>
-            <a href="{html.escape(news['original_link'])}" class="origin-link" target="_blank">DECODE_FULL_SOURCE_CONTENT →</a>
+        <article>
+            <div class="num">{i:02d}</div>
+            <div>
+                <span class="cat">{html.escape(news['category'])}</span>
+                <span class="time">{html.escape(news.get('timestamp', ''))}</span>
+                <h2>{format_inline(title)}</h2>
+                <div class="summary">{format_inline(summary)}</div>
+                {points_html}
+                <a class="src" href="{html.escape(news['original_link'])}" target="_blank">閱讀原文 →</a>
+            </div>
         </article>
-        """
-    
+"""
+
     html_content += """
-        </main>
-        <footer>
-            ECHO TERMINAL v2.3 // CLEAN WHITE INTERFACE // 2026
-        </footer>
-    </body>
-    </html>
-    """
+    </main>
+    <footer>
+        ECHO TERMINAL v3.0 · Swiss Minimal Interface · 2026
+    </footer>
+</body>
+</html>
+"""
     
     os.makedirs("docs", exist_ok=True)
     with open("docs/index.html", "w", encoding="utf-8") as f:
