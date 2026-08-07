@@ -1,7 +1,7 @@
 # 🗞️ Gemini News Station (Gemini 個人新聞台)
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
-![Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-orange?logo=google-gemini)
+![Gemini](https://img.shields.io/badge/AI-Gemini%203.5%20Flash%20Lite-orange?logo=google-gemini)
 ![GitHub Actions](https://img.shields.io/badge/Automation-GitHub%20Actions-black?logo=github-actions)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -11,10 +11,14 @@
 
 ## ✨ 核心功能
 
-- **🤖 AI 深度編輯**：利用 Google Gemini 2.5-Flash 模型，將英文新聞翻譯為繁體中文，並撰寫 200-400 字的深度摘要與 3 大關鍵點。
-- **📅 每日自動更新**：透過 GitHub Actions，每天定時抓取 BBC (國際) 與 TechCrunch (科技) 的最新內容。
+- **🤖 AI 深度編輯**：利用 Google Gemini 3.5-Flash-Lite 模型，將英文新聞翻譯為繁體中文，並撰寫 200-400 字的深度摘要與 3 大關鍵點。
+- **📅 每日自動更新**：透過 GitHub Actions，每天定時抓取多元新聞來源：
+  - BBC (國際)、TechCrunch (科技)
+  - Mountain View / Palo Alto / Los Altos 在地新聞
+  - TLDR Newsletter、1440 Daily Digest、The Rundown AI 等電子報
 - **🔗 手動發布功能**：支援 `workflow_dispatch`。看到喜歡的文章，只需輸入網址，AI 就會幫你編輯並發布到新聞台。
 - **🗂️ 歷史紀錄資料庫**：內建 JSON 資料庫，自動跳過已重複處理的新聞，並累積歷史文章。
+- **📧 每日 Email 摘要**：可選設定 Gmail SMTP，自動將當日新聞摘要寄送到指定信箱。
 - **🌐 零成本託管**：完全運行於 GitHub 免費服務，無需租用伺服器。
 
 ---
@@ -37,8 +41,9 @@
 2. **取得 Gemini API Key**：前往 [Google AI Studio](https://aistudio.google.com/) 申請免費的金鑰。
 3. **設定 GitHub Secrets**：
    - 進入你的 Repo -> **Settings** -> **Secrets and variables** -> **Actions**。
-   - 點擊 **New repository secret**。
-   - Name: `GOOGLE_API_KEY` / Secret: (填入你的金鑰)。
+   - 點擊 **New repository secret**，依序新增：
+     - `GOOGLE_API_KEY`（必填）：Gemini API 金鑰。
+     - `GMAIL_USER` / `GMAIL_APP_PASSWORD` / `RECIPIENT_EMAIL`（選填）：設定後才會寄送每日新聞摘要 Email，可參考 `.env.example`。
 4. **開啟寫入權限**：
    - 進入 **Settings** -> **Actions** -> **General**。
    - 捲動到 **Workflow permissions**。
