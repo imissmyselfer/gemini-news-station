@@ -33,6 +33,31 @@ def clean_url(url):
     parsed = urlparse(url)
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', '', ''))
 
+def dedup_keys(link, title):
+    """產生一則新聞的去重鍵，涵蓋網址、跨站同步轉載與標題三種重複情況"""
+    keys = {f"url:{clean_url(link)}"}
+
+    # 姊妹報（如 MV Voice / Palo Alto Online）會同步轉載同一篇稿子，
+    # 網址 path 完全相同、只有 host 不同，因此單獨用 path 當去重鍵。
+    path = urlparse(link).path.rstrip('/')
+    if len(path) >= 25:
+        keys.add(f"path:{path}")
+
+    # 標題正規化：去除大小寫、空白與標點差異 (\w 在 Python 3 已涵蓋中日韓文字)
+    normalized = re.sub(r'\W', '', (title or '').lower())[:40]
+    if len(normalized) >= 10:
+        keys.add(f"title:{normalized}")
+
+    return keys
+
+def is_duplicate(news, seen):
+    """判斷新聞是否重複；若不重複則把它的去重鍵記入 seen"""
+    keys = dedup_keys(news['link'], news['title'])
+    if keys & seen:
+        return True
+    seen |= keys
+    return False
+
 def load_db():
     """讀取新聞資料庫"""
     if os.path.exists(DB_PATH):
@@ -235,77 +260,48 @@ def fetch_los_altos():
         print(f"抓取 Los Altos 時發生錯誤: {e}")
     return all_articles
 
-def fetch_news(existing_links, existing_titles):
-    """抓取 RSS 中的新聞清單 (過濾已存在的新聞)"""
+def fetch_news(seen):
+    """抓取各來源新聞清單 (過濾已存在與本次重複的新聞)
+
+    seen 會隨著收錄逐則更新，因此同一次執行中重複出現的新聞
+    （例如姊妹報同步轉載的同一篇稿子）也會被擋下來。
+    """
     all_news = []
+
+    def collect(candidates, limit=5):
+        for news in candidates[:limit]:
+            if is_duplicate(news, seen):
+                print(f"   跳過重複新聞: {news['title'][:30]}...")
+            else:
+                all_news.append(news)
 
     manual_url = os.getenv("MANUAL_URL")
     if manual_url:
-        cleaned_manual = clean_url(manual_url)
-        if cleaned_manual not in existing_links:
-            print(f"偵測到手動網址: {manual_url}")
-            manual_news = fetch_manual_url(manual_url)
-            if manual_news:
-                all_news.append(manual_news)
+        print(f"偵測到手動網址: {manual_url}")
+        manual_news = fetch_manual_url(manual_url)
+        if manual_news:
+            collect([manual_news])
 
     for category, url in FEEDS.items():
         print(f"正在抓取 {category} RSS...")
         feed = feedparser.parse(url)
-        # 限制每類新聞抓取數量：當地新聞最多 5 則，其他 RSS 最多 5 則
-        limit = 5
-        for entry in feed.entries[:limit]:
-            cleaned_link = clean_url(entry.link)
-            short_title = entry.title[:20]
-            if cleaned_link not in existing_links and short_title not in existing_titles:
-                all_news.append({
-                    "category": category,
-                    "title": entry.title,
-                    "link": entry.link,
-                    "summary": entry.summary if hasattr(entry, 'summary') else ""
-                })
-            else:
-                print(f"   跳過重複新聞: {entry.title[:30]}...")
+        # 限制每類新聞抓取數量：每個 RSS 來源最多 5 則
+        collect([{
+            "category": category,
+            "title": entry.title,
+            "link": entry.link,
+            "summary": entry.summary if hasattr(entry, 'summary') else ""
+        } for entry in feed.entries[:5]])
 
-    # 抓取新增的電子報來源
-    print("正在抓取 TLDR Newsletter...")
-    tldr_news = fetch_tldr()
-    for news in tldr_news[:5]:
-        cleaned_link = clean_url(news['link'])
-        short_title = news['title'][:20]
-        if cleaned_link not in existing_links and short_title not in existing_titles:
-            all_news.append(news)
-        else:
-            print(f"   跳過重複新聞: {news['title'][:30]}...")
-
-    print("正在抓取 1440 Daily Digest...")
-    digest_news = fetch_1440()
-    for news in digest_news[:5]:
-        cleaned_link = clean_url(news['link'])
-        short_title = news['title'][:20]
-        if cleaned_link not in existing_links and short_title not in existing_titles:
-            all_news.append(news)
-        else:
-            print(f"   跳過重複新聞: {news['title'][:30]}...")
-
-    print("正在抓取 The Rundown AI...")
-    rundown_news = fetch_rundown()
-    for news in rundown_news[:5]:
-        cleaned_link = clean_url(news['link'])
-        short_title = news['title'][:20]
-        if cleaned_link not in existing_links and short_title not in existing_titles:
-            all_news.append(news)
-        else:
-            print(f"   跳過重複新聞: {news['title'][:30]}...")
-
-    print("正在抓取 Los Altos 當地新聞...")
-    los_altos_news = fetch_los_altos()
-    for news in los_altos_news[:5]:
-        cleaned_link = clean_url(news['link'])
-        short_title = news['title'][:20]
-        if cleaned_link not in existing_links and short_title not in existing_titles:
-            all_news.append(news)
-        else:
-            print(f"   跳過重複新聞: {news['title'][:30]}...")
+    # 抓取電子報與網頁爬蟲來源
+    for label, fetcher in [
+        ("TLDR Newsletter", fetch_tldr),
+        ("1440 Daily Digest", fetch_1440),
+        ("The Rundown AI", fetch_rundown),
+        ("Los Altos 當地新聞", fetch_los_altos),
+    ]:
+        print(f"正在抓取 {label}...")
+        collect(fetcher())
 
     return all_news
 
@@ -707,11 +703,12 @@ def send_daily_email(processed_news_list):
 if __name__ == "__main__":
     print("載入資料庫...")
     db = load_db()
-    existing_links = {clean_url(news['original_link']) for news in db}
-    existing_titles = {news.get('original_title', '')[:20] for news in db}
+    seen = set()
+    for news in db:
+        seen |= dedup_keys(news['original_link'], news.get('original_title', ''))
 
     print("開始抓取新聞...")
-    new_raw_news = fetch_news(existing_links, existing_titles)
+    new_raw_news = fetch_news(seen)
 
     new_processed = []
     if not new_raw_news:
