@@ -3,6 +3,7 @@ from google import genai
 import os
 import requests
 import json
+import html
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urlparse, urlunparse
@@ -543,10 +544,10 @@ def generate_html(all_history):
     for news in display_news:
         html_content += f"""
         <article class="news-card">
-            <span class="category-tag">{news['category']}</span>
-            <span class="timestamp">LOG_REF: {news.get('timestamp', '')}</span>
-            <div class="news-content">{news['content']}</div>
-            <a href="{news['original_link']}" class="origin-link" target="_blank">DECODE_FULL_SOURCE_CONTENT →</a>
+            <span class="category-tag">{html.escape(news['category'])}</span>
+            <span class="timestamp">LOG_REF: {html.escape(news.get('timestamp', ''))}</span>
+            <div class="news-content">{html.escape(news['content'])}</div>
+            <a href="{html.escape(news['original_link'])}" class="origin-link" target="_blank">DECODE_FULL_SOURCE_CONTENT →</a>
         </article>
         """
     
@@ -657,10 +658,10 @@ def send_daily_email(processed_news_list):
         for i, article in enumerate(email_articles, 1):
             email_html += f"""
                 <div class="news-item">
-                    <span class="news-category">{article['category']}</span>
-                    <div class="news-title">{i}. {article['title']}</div>
-                    <div class="news-content">{article['key_points']}</div>
-                    <div class="news-link"><a href="{article['link']}" target="_blank">閱讀完整文章 →</a></div>
+                    <span class="news-category">{html.escape(article['category'])}</span>
+                    <div class="news-title">{i}. {html.escape(article['title'])}</div>
+                    <div class="news-content">{html.escape(article['key_points'])}</div>
+                    <div class="news-link"><a href="{html.escape(article['link'])}" target="_blank">閱讀完整文章 →</a></div>
                 </div>
             """
 
