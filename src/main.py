@@ -58,6 +58,30 @@ def is_duplicate(news, seen):
     seen |= keys
     return False
 
+# 西班牙文偵測用的詞表 (CalMatters 稿件常有西班牙文版，對中文新聞台是冗餘內容)
+_ES_PLACES = re.compile(
+    r'\b(los altos|palo alto|los gatos|san jose|la honda|el camino|el cerrito'
+    r'|el ni[nñ]o|la ni[nñ]a)\b', re.I)
+_ES_WORDS = re.compile(
+    r'\b(los|las|una|unos|unas|del|por|para|con|qu[eé]|m[aá]s|est[aá]|est[aá]n'
+    r'|seg[uú]n|sobre|tras|entre|desde|hasta|porque|c[oó]mo|sus|nuev[oa]s?|pero'
+    r'|cuando|todos|todas|tiene|tienen|puede|pueden|podr[ií]an?|a[nñ]os|ciudad'
+    r'|gobierno|contra|tambi[eé]n|imponen)\b', re.I)
+# 與英文易混淆的短詞只認小寫，避免 LA (Los Angeles)、Al Jazeera、De Niro 被誤判
+_ES_WORDS_LOWER = re.compile(r'\b(de|la|el|en|se|al|un|su|es|lo|y)\b')
+
+def is_spanish(title):
+    """判斷標題是否為西班牙文 (同一篇稿子的英文版一定也在來源中，故可略過)"""
+    text = _ES_PLACES.sub(' ', title or '')
+    if re.search(r'[¿¡]', text):        # 倒置標點只出現在西班牙文
+        return True
+
+    marks = set(w.lower() for w in _ES_WORDS.findall(text))
+    marks |= set(_ES_WORDS_LOWER.findall(text))
+    if re.search(r'[áéíóúñ]', text):    # 重音字元只當輔助證據，單獨不足以判定
+        marks.add('<accent>')
+    return len(marks) >= 2
+
 def load_db():
     """讀取新聞資料庫"""
     if os.path.exists(DB_PATH):
@@ -270,7 +294,9 @@ def fetch_news(seen):
 
     def collect(candidates, limit=5):
         for news in candidates[:limit]:
-            if is_duplicate(news, seen):
+            if is_spanish(news['title']):
+                print(f"   跳過西班牙文版本: {news['title'][:30]}...")
+            elif is_duplicate(news, seen):
                 print(f"   跳過重複新聞: {news['title'][:30]}...")
             else:
                 all_news.append(news)
