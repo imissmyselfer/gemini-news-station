@@ -46,11 +46,12 @@ def send_email(config, subject, body):
         print(f"Failed to send email: {e}")
 
 def get_latest_news(news_file):
-    if not os.path.exists(news_file):
+    if not news_file or not os.path.exists(news_file):
         return "No news data found."
     with open(news_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        return "\n".join([item['content'][:500] for item in data[:3]])
+        # 資料庫是依時間往後 append，最新的在尾端
+        return "\n".join([item['content'][:500] for item in data[-3:]])
 
 def get_music_list(music_file):
     if not os.path.exists(music_file):
@@ -106,16 +107,19 @@ def morning_dj():
     )
     report_content = response.text
     
-    # 1. 儲存到 Obsidian
+    # 1. 儲存到 Obsidian (未設定 OBSIDIAN_INBOX 則跳過)
     today = datetime.now().strftime("%Y-%m-%d")
-    filename = f"Morning-DJ-{today}.md"
-    file_path = os.path.join(obsidian_inbox, filename)
-    os.makedirs(obsidian_inbox, exist_ok=True)
+    if obsidian_inbox:
+        filename = f"Morning-DJ-{today}.md"
+        file_path = os.path.join(obsidian_inbox, filename)
+        os.makedirs(obsidian_inbox, exist_ok=True)
 
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(f"# 📻 Morning DJ Radio - {today}\n\n")
-        f.write(report_content)
-    print(f"Obsidian note created at: {file_path}")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(f"# 📻 Morning DJ Radio - {today}\n\n")
+            f.write(report_content)
+        print(f"Obsidian note created at: {file_path}")
+    else:
+        print("Skipping Obsidian note: OBSIDIAN_INBOX not set in .env")
 
     # 2. 同步發送 Email
     subject = f"📻 Your Morning DJ Report - {today}"
