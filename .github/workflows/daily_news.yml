@@ -42,4 +42,6 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add docs/index.html data/news.json
           git commit -m "Update news database and index.html" || echo "No changes to commit"
+          # 若執行期間有其他 push（例如手動修改程式），先 rebase 再推，避免 push 被拒
+          git pull --rebase origin main
           git push
