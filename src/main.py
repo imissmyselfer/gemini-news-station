@@ -614,43 +614,15 @@ def send_daily_email(processed_news_list):
         return
 
     try:
-        # 提取每則新聞的標題和關鍵重點
+        # 沿用網頁版的解析邏輯，讓 Email 與網站內容一致
         email_articles = []
         for news in processed_news_list:
-            content = news.get('content', '')
-
-            # 從 Gemini 回傳的格式解析標題和重點
-            # 格式 1: [標題] xxx\n...
-            # 格式 2: 標題內容\n[深度摘要] 或 [完整摘要]...
-            # 格式 3: [標題內容]\n[摘要]...
-            title = ""
-            if "[標題]" in content:
-                title = content.split("[標題]")[1].split("\n")[0].strip()
-            else:
-                # 嘗試取第一行作為標題
-                first_line = content.split("\n")[0].strip()
-                if first_line:
-                    # 去除方括號、**、等格式符號
-                    title = first_line.replace("[", "").replace("]", "").replace("**", "").strip()
-
-            key_points = ""
-            if "[關鍵重點]" in content:
-                key_points_section = content.split("[關鍵重點]")[1].strip()
-                # 只取前 300 字
-                key_points = key_points_section[:300]
-            elif "[深度摘要]" in content or "[完整摘要]" in content:
-                # 如果沒有關鍵重點，嘗試從摘要提取
-                if "[深度摘要]" in content:
-                    summary = content.split("[深度摘要]")[1].strip()
-                else:
-                    summary = content.split("[完整摘要]")[1].strip()
-                # 取前 300 字作為關鍵重點
-                key_points = summary[:300]
-
+            title, summary, points = parse_gemini_content(news.get('content', ''))
             if title:
                 email_articles.append({
                     "title": title,
-                    "key_points": key_points,
+                    "summary": summary,
+                    "points": points,
                     "link": news.get('original_link', ''),
                     "category": news.get('category', '')
                 })
@@ -660,54 +632,63 @@ def send_daily_email(processed_news_list):
             return
 
         # 產生 HTML 格式的 Email 內容
+        # 註：郵件客戶端多半會剝掉 <style> 區塊，因此一律使用 inline style
         now = datetime.now().strftime("%Y-%m-%d")
-        email_html = f"""
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body {{ font-family: 'PingFang TC', 'Microsoft YaHei', Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ border-bottom: 2px solid #2aa198; padding-bottom: 15px; margin-bottom: 25px; }}
-                .header h1 {{ margin: 0; color: #2aa198; font-size: 24px; }}
-                .header p {{ margin: 5px 0 0 0; color: #666; font-size: 14px; }}
-                .news-item {{ margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }}
-                .news-item:last-child {{ border-bottom: none; }}
-                .news-category {{ display: inline-block; background: #2aa198; color: white; padding: 3px 10px; border-radius: 3px; font-size: 12px; margin-bottom: 8px; }}
-                .news-title {{ font-size: 16px; font-weight: bold; margin: 8px 0; color: #222; }}
-                .news-content {{ font-size: 14px; color: #555; margin: 10px 0; line-height: 1.6; }}
-                .news-link {{ display: inline-block; margin-top: 10px; }}
-                .news-link a {{ color: #2aa198; text-decoration: none; font-weight: bold; }}
-                .news-link a:hover {{ text-decoration: underline; }}
-                .footer {{ text-align: center; color: #999; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>📰 今日新聞摘要</h1>
-                    <p>{now}</p>
-                </div>
-        """
+        font = "'Helvetica Neue', Helvetica, 'PingFang TC', 'Microsoft JhengHei', Arial, sans-serif"
+
+        email_html = f"""<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;">
+    <div style="max-width:640px;margin:0 auto;padding:40px 24px;font-family:{font};color:#000;line-height:1.75;">
+        <div style="border-bottom:3px solid #000;padding-bottom:16px;">
+            <div style="font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1;">ECHO TERMINAL</div>
+            <div style="font-size:11px;color:#999;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;">
+                Intelligence Briefing &nbsp;·&nbsp; {now}
+            </div>
+        </div>
+"""
 
         for i, article in enumerate(email_articles, 1):
+            points_html = ""
+            if article['points']:
+                items = "".join(
+                    f'<li style="margin-bottom:6px;">{format_inline(p)}</li>'
+                    for p in article['points']
+                )
+                points_html = (
+                    '<ul style="margin:16px 0 0;padding-left:18px;font-size:13px;color:#555;">'
+                    f'{items}</ul>'
+                )
+
+            summary = article['summary'][:300]
+            if len(article['summary']) > 300:
+                summary += "…"
+
             email_html += f"""
-                <div class="news-item">
-                    <span class="news-category">{html.escape(article['category'])}</span>
-                    <div class="news-title">{i}. {html.escape(article['title'])}</div>
-                    <div class="news-content">{html.escape(article['key_points'])}</div>
-                    <div class="news-link"><a href="{html.escape(article['link'])}" target="_blank">閱讀完整文章 →</a></div>
-                </div>
-            """
+        <div style="padding:28px 0;border-bottom:1px solid #ddd;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0033cc;">
+                {i:02d} &nbsp;·&nbsp; {html.escape(article['category'])}
+            </div>
+            <div style="font-size:18px;font-weight:700;line-height:1.4;margin:10px 0 12px;color:#000;">
+                {format_inline(article['title'])}
+            </div>
+            <div style="font-size:14px;color:#333;">{format_inline(summary)}</div>
+            {points_html}
+            <a href="{html.escape(article['link'])}" target="_blank"
+               style="display:inline-block;margin-top:18px;font-size:12px;font-weight:700;color:#0033cc;
+                      text-decoration:none;letter-spacing:1px;text-transform:uppercase;">閱讀原文 →</a>
+        </div>
+"""
 
         email_html += """
-                <div class="footer">
-                    <p>ECHO TERMINAL News Summary | 每日自動生成</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        <div style="margin-top:32px;padding-top:16px;border-top:3px solid #000;
+                    font-size:11px;color:#999;letter-spacing:1.5px;text-transform:uppercase;">
+            Echo Terminal · 每日自動生成
+        </div>
+    </div>
+</body>
+</html>
+"""
 
         # 發送 Email
         msg = MIMEMultipart('alternative')
